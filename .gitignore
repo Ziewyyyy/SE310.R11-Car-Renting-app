@@ -1,0 +1,108 @@
+
+# ==========================================
+# .NET / ASP.NET Core / Blazor
+# ==========================================
+
+**/bin/
+**/obj/
+**/Debug/
+**/Release/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# VS Code (giữ lại cấu hình chung nếu cần)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# ==========================================
+# Local configuration / Secrets
+# ==========================================
+
+.env
+.env.*
+!.env.example
+
+**/appsettings.Local.json
+**/appsettings.*.Local.json
+**/appsettings.Development.json
+**/appsettings.Production.json
+
+secrets.json
+*.pfx
+*.p12
+*.key
+*.pem
+
+# ==========================================
+# PostgreSQL / Database backups
+# ==========================================
+
+*.bak
+*.backup
+*.dump
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+
+# ==========================================
+# Logs / Temporary files
+# ==========================================
+
+*.log
+logs/
+**/Logs/
+*.tmp
+*.temp
+*.cache
+
+# ==========================================
+# Frontend dependencies / Build output
+# ==========================================
+
+node_modules/
+dist/
+build/
+coverage/
+.npm/
+*.tsbuildinfo
+
+# ==========================================
+# Operating systems
+# ==========================================
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==========================================
+# Test results / IDE-generated files
+# ==========================================
+
+TestResults/
+*.trx
+coverage.xml
+coverage.json
+
+# ==========================================
+# Keep source code and shared DB artifacts
+# ==========================================
+
+!**/Migrations/
+!**/Migrations/**
+!database/seed.sql
+!README_DATABASE.md
+!docs/README_API.md

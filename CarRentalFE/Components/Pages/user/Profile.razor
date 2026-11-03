@@ -1,0 +1,274 @@
+
+@page "/profile"
+@rendermode InteractiveServer
+@using System.Linq
+@using CarRentalFE.Components.Layout
+@layout EmptyLayout
+
+<PageTitle>Đơn thuê của tôi - RENTO</PageTitle>
+
+<div class="rento-app">
+    <header class="rento-header">
+        <a href="/" class="rento-logo">
+            <span class="logo-icon">🚘</span>
+            <strong>RENTO</strong>
+        </a>
+
+        <nav class="rento-nav">
+            <a href="/">Trang chủ</a>
+            <a href="/cars">Thuê xe</a>
+            <a href="/guide">Hướng dẫn thuê xe</a>
+            <a href="/support">Hỗ trợ</a>
+        </nav>
+
+        <div class="header-user">
+            <span class="avatar">NT</span>
+            <div>
+                <strong>Nguyễn Minh Tú</strong>
+                <small>Tài khoản của tôi</small>
+            </div>
+            <span>⌄</span>
+        </div>
+    </header>
+
+    <div class="rento-body">
+        <aside class="rento-sidebar">
+            <div class="sidebar-profile">
+                <span class="avatar">NT</span>
+                <div>
+                    <strong>Nguyễn Minh Tú</strong>
+                    <small>Thành viên Bạc</small>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
+                <a href="/profile" class="active">🚘 &nbsp; Đơn thuê của tôi</a>
+                <a href="/contracts">▤ &nbsp; Hợp đồng</a>
+                <a href="/payments">▣ &nbsp; Thanh toán</a>
+                <a href="/reviews">☆ &nbsp; Đánh giá của tôi</a>
+                <a href="/support">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
+                <a href="/notifications">♧ &nbsp; Thông báo</a>
+                <a href="/profile">♙ &nbsp; Thông tin cá nhân</a>
+            </nav>
+
+            <a href="/login" class="sidebar-logout">
+                ⇥ &nbsp; Đăng xuất
+            </a>
+        </aside>
+
+        <main class="rentals-main">
+            <h1>Đơn thuê của tôi</h1>
+            <p class="page-subtitle">
+                Theo dõi và quản lý mọi hành trình.
+            </p>
+
+            <div class="rento-stats">
+                <div class="stat-card">
+                    <span class="stat-icon">▤</span>
+                    <div>
+                        <small>Tổng đơn thuê</small>
+                        <strong>08</strong>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <span class="stat-icon">🚘</span>
+                    <div>
+                        <small>Đang thuê</small>
+                        <strong>01</strong>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <span class="stat-icon">◷</span>
+                    <div>
+                        <small>Chờ xác nhận</small>
+                        <strong>01</strong>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <span class="stat-icon">⌖</span>
+                    <div>
+                        <small>Tổng hành trình</small>
+                        <strong>2.840 km</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rento-tabs">
+                @foreach (var status in StatusTabs)
+                {
+                    <button class="@(SelectedStatus == status ? "active" : "")"
+                            @onclick="() => SelectStatus(status)">
+                        @status
+                    </button>
+                }
+            </div>
+
+            <div class="rento-toolbar">
+                <input type="text"
+                       placeholder="⌕  Tìm theo mã đơn hoặc tên xe"
+                       @bind="SearchText"
+                       @bind:event="oninput" />
+
+                <button class="date-filter" @onclick="ToggleDateFilter">
+                    ▣ &nbsp; Lọc theo ngày
+                </button>
+            </div>
+
+            @if (ShowDateFilter)
+            {
+                <div class="date-filter-panel">
+                    <label>Từ ngày
+                        <input type="date" @bind="FromDate" />
+                    </label>
+                    <label>Đến ngày
+                        <input type="date" @bind="ToDate" />
+                    </label>
+                    <button @onclick="ClearDates">Xóa lọc ngày</button>
+                </div>
+            }
+
+            <div class="booking-list">
+                @foreach (var booking in FilteredBookings)
+                {
+                    <div class="booking-card">
+                        <img src="@booking.Image"
+                             alt="@booking.CarName" />
+
+                        <div class="booking-info">
+                            <div class="booking-meta">
+                                <span>@booking.Id</span>
+                                <span class="status-badge @booking.StatusClass">
+                                    @booking.Status
+                                </span>
+                            </div>
+
+                            <h3>@booking.CarName</h3>
+                            <p>▣ &nbsp; @booking.DateText</p>
+                        </div>
+
+                        <div class="booking-actions">
+                            <small>Tổng dự kiến</small>
+                            <strong>@booking.Price.ToString("N0") ₫</strong>
+                            <button @onclick="() => ShowBooking(booking)">
+                                Xem chi tiết
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (!FilteredBookings.Any())
+                {
+                    <div class="empty-bookings">
+                        Không tìm thấy đơn thuê phù hợp.
+                    </div>
+                }
+            </div>
+        </main>
+    </div>
+</div>
+
+@if (SelectedBooking is not null)
+{
+    <div class="rento-modal-backdrop">
+        <div class="rento-modal">
+            <h2>Chi tiết đơn thuê</h2>
+            <p><b>Mã đơn:</b> @SelectedBooking.Id</p>
+            <p><b>Xe:</b> @SelectedBooking.CarName</p>
+            <p><b>Thời gian:</b> @SelectedBooking.DateText</p>
+            <p><b>Trạng thái:</b> @SelectedBooking.Status</p>
+            <p><b>Tổng dự kiến:</b> @SelectedBooking.Price.ToString("N0") ₫</p>
+            <button @onclick="CloseBooking">Đóng</button>
+        </div>
+    </div>
+}
+
+@code {
+    private string SelectedStatus = "Tất cả";
+    private string SearchText = "";
+    private bool ShowDateFilter = false;
+    private DateTime? FromDate;
+    private DateTime? ToDate;
+    private BookingItem? SelectedBooking;
+
+    private readonly string[] StatusTabs =
+    {
+        "Tất cả", "Chờ xác nhận", "Sắp nhận xe",
+        "Đang thuê", "Hoàn thành", "Đã hủy"
+    };
+
+    private readonly List<BookingItem> Bookings = new()
+    {
+        new()
+        {
+            Id = "#RT250622-0186",
+            CarName = "BMW 430i M Sport",
+            DateText = "22/06 – 25/06/2025",
+            StartDate = new DateTime(2025, 6, 22),
+            Price = 22700000,
+            Status = "Chờ xác nhận",
+            StatusClass = "pending",
+            Image = "https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400"
+        },
+        new()
+        {
+            Id = "#RT250515-0094",
+            CarName = "Audi Q7 Premium",
+            DateText = "15/05 – 18/05/2025",
+            StartDate = new DateTime(2025, 5, 15),
+            Price = 11250000,
+            Status = "Hoàn thành",
+            StatusClass = "completed",
+            Image = "https://images.unsplash.com/photo-1541348263662-e068662d82af?w=400"
+        },
+        new()
+        {
+            Id = "#RT250402-0041",
+            CarName = "Porsche Panamera 4S",
+            DateText = "02/04 – 04/04/2025",
+            StartDate = new DateTime(2025, 4, 2),
+            Price = 10100000,
+            Status = "Đã hủy",
+            StatusClass = "cancelled",
+            Image = "https://images.unsplash.com/photo-1601929862217-f1bf94503333?w=400"
+        }
+    };
+
+    private IEnumerable<BookingItem> FilteredBookings =>
+        Bookings.Where(b =>
+            (SelectedStatus == "Tất cả" || b.Status == SelectedStatus)
+            && (string.IsNullOrWhiteSpace(SearchText)
+                || b.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                || b.CarName.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+            && (!FromDate.HasValue || b.StartDate.Date >= FromDate.Value.Date)
+            && (!ToDate.HasValue || b.StartDate.Date <= ToDate.Value.Date));
+
+    private void SelectStatus(string status) => SelectedStatus = status;
+
+    private void ToggleDateFilter() => ShowDateFilter = !ShowDateFilter;
+
+    private void ClearDates()
+    {
+        FromDate = null;
+        ToDate = null;
+    }
+
+    private void ShowBooking(BookingItem booking) => SelectedBooking = booking;
+
+    private void CloseBooking() => SelectedBooking = null;
+
+    private class BookingItem
+    {
+        public string Id { get; set; } = "";
+        public string CarName { get; set; } = "";
+        public string DateText { get; set; } = "";
+        public DateTime StartDate { get; set; }
+        public decimal Price { get; set; }
+        public string Status { get; set; } = "";
+        public string StatusClass { get; set; } = "";
+        public string Image { get; set; } = "";
+    }
+}

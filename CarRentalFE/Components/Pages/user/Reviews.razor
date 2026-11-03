@@ -1,0 +1,251 @@
+
+@page "/reviews"
+@rendermode InteractiveServer
+@using CarRentalFE.Components.Layout
+@layout EmptyLayout
+
+<PageTitle>Đánh giá của tôi - RENTO</PageTitle>
+
+<div class="rento-app">
+    <header class="rento-header">
+        <a href="/" class="rento-logo">
+            <span class="logo-icon">🚘</span>
+            <strong>RENTO</strong>
+        </a>
+
+        <nav class="rento-nav">
+            <a href="/">Trang chủ</a>
+            <a href="/cars">Thuê xe</a>
+            <a href="/guide">Hướng dẫn thuê xe</a>
+            <a href="/support">Hỗ trợ</a>
+        </nav>
+
+        <div class="header-user">
+            <span class="avatar">NT</span>
+            <div>
+                <strong>Nguyễn Minh Tú</strong>
+                <small>Tài khoản của tôi</small>
+            </div>
+            <span>⌄</span>
+        </div>
+    </header>
+
+    <div class="rento-body">
+        <aside class="rento-sidebar">
+            <div class="sidebar-profile">
+                <span class="avatar">NT</span>
+                <div>
+                    <strong>Nguyễn Minh Tú</strong>
+                    <small>Thành viên Bạc</small>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
+                <a href="/profile">🚘 &nbsp; Đơn thuê của tôi</a>
+                <a href="/contracts">▤ &nbsp; Hợp đồng</a>
+                <a href="/payments">▣ &nbsp; Thanh toán</a>
+                <a href="/reviews" class="active">☆ &nbsp; Đánh giá của tôi</a>
+                <a href="/support">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
+                <a href="/notifications">♧ &nbsp; Thông báo</a>
+                <a href="/account-info">♙ &nbsp; Thông tin cá nhân</a>
+            </nav>
+
+            <a href="/login" class="sidebar-logout">
+                ⇥ &nbsp; Đăng xuất
+            </a>
+        </aside>
+
+        <main class="rentals-main">
+            <h1>Đánh giá của tôi</h1>
+            <p class="page-subtitle">
+                Chia sẻ trải nghiệm để giúp cộng đồng chọn xe tốt hơn.
+            </p>
+
+            @if (!HasReviewedAudi)
+            {
+                <div class="review-eligible-card">
+                    <img src="https://images.unsplash.com/photo-1541348263662-e068662d82af?w=400"
+                         alt="Audi Q7 Premium" />
+
+                    <div class="review-eligible-info">
+                        <span class="review-eligible-badge">
+                            Có thể đánh giá
+                        </span>
+
+                        <h3>Audi Q7 Premium</h3>
+
+                        <p>
+                            Đơn thuê #RT250515-0094 ·
+                            Hoàn thành 18/05/2025
+                        </p>
+                    </div>
+
+                    <button class="write-review-btn"
+                            @onclick="OpenReviewModal">
+                        Viết đánh giá
+                    </button>
+                </div>
+            }
+
+            <section class="reviews-history">
+                <h2>Đánh giá đã gửi</h2>
+
+                @foreach (var review in ReviewList)
+                {
+                    <div class="review-item">
+                        <div class="review-item-header">
+                            <div class="review-title">
+                                <strong>@review.CarName</strong>
+
+                                <span class="review-stars">
+                                    @for (int i = 0; i < review.Rating; i++)
+                                    {
+                                        <span>★</span>
+                                    }
+                                </span>
+                            </div>
+
+                            <small>@review.Date</small>
+                        </div>
+
+                        <p class="review-content">
+                            @review.Content
+                        </p>
+
+                        @if (!string.IsNullOrEmpty(review.Response))
+                        {
+                            <div class="review-response">
+                                <strong>RENTO phản hồi</strong>
+                                <p>@review.Response</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+        </main>
+    </div>
+</div>
+
+@if (ShowReviewModal)
+{
+    <div class="rento-modal-backdrop">
+        <div class="rento-modal review-modal">
+            <h2>Đánh giá Audi Q7 Premium</h2>
+
+            <p>Trải nghiệm của bạn với chiếc xe này thế nào?</p>
+
+            <div class="review-rating-input">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    int star = i;
+
+                    <button type="button"
+                            class="@(star <= SelectedRating ? "selected" : "")"
+                            @onclick="() => SetRating(star)">
+                        ★
+                    </button>
+                }
+            </div>
+
+            <label class="review-label">Nội dung đánh giá</label>
+
+            <textarea class="review-textarea"
+                      placeholder="Chia sẻ trải nghiệm thuê xe của bạn..."
+                      @bind="ReviewContent"
+                      @bind:event="oninput">
+            </textarea>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <p class="review-error">@ErrorMessage</p>
+            }
+
+            <div class="review-modal-actions">
+                <button class="cancel-review"
+                        @onclick="CloseReviewModal">
+                    Hủy
+                </button>
+
+                <button class="submit-review"
+                        @onclick="SubmitReview">
+                    Gửi đánh giá
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool ShowReviewModal = false;
+    private bool HasReviewedAudi = false;
+    private int SelectedRating = 0;
+    private string ReviewContent = "";
+    private string ErrorMessage = "";
+
+    private List<ReviewItem> ReviewList = new()
+    {
+        new()
+        {
+            CarName = "Porsche Panamera 4S",
+            Rating = 5,
+            Date = "05/04/2025",
+            Content = "Xe sạch, vận hành tuyệt vời. Quy trình nhận xe nhanh và nhân viên hỗ trợ rất chuyên nghiệp.",
+            Response = "Cảm ơn anh Tú đã tin tưởng RENTO. Hẹn gặp lại anh trong hành trình tiếp theo!"
+        }
+    };
+
+    private void OpenReviewModal()
+    {
+        SelectedRating = 0;
+        ReviewContent = "";
+        ErrorMessage = "";
+        ShowReviewModal = true;
+    }
+
+    private void CloseReviewModal()
+    {
+        ShowReviewModal = false;
+    }
+
+    private void SetRating(int rating)
+    {
+        SelectedRating = rating;
+    }
+
+    private void SubmitReview()
+    {
+        if (SelectedRating == 0)
+        {
+            ErrorMessage = "Vui lòng chọn số sao đánh giá.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(ReviewContent))
+        {
+            ErrorMessage = "Vui lòng nhập nội dung đánh giá.";
+            return;
+        }
+
+        ReviewList.Insert(0, new ReviewItem
+        {
+            CarName = "Audi Q7 Premium",
+            Rating = SelectedRating,
+            Date = DateTime.Now.ToString("dd/MM/yyyy"),
+            Content = ReviewContent.Trim(),
+            Response = ""
+        });
+
+        HasReviewedAudi = true;
+        ShowReviewModal = false;
+    }
+
+    private class ReviewItem
+    {
+        public string CarName { get; set; } = "";
+        public int Rating { get; set; }
+        public string Date { get; set; } = "";
+        public string Content { get; set; } = "";
+        public string Response { get; set; } = "";
+    }
+}

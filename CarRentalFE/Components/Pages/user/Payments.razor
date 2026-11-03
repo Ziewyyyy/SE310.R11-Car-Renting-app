@@ -1,0 +1,176 @@
+
+@page "/payments"
+@rendermode InteractiveServer
+@using System.Linq
+@using CarRentalFE.Components.Layout
+@layout EmptyLayout
+
+<PageTitle>Thanh toán & đặt cọc - RENTO</PageTitle>
+
+<div class="rento-app">
+    <header class="rento-header">
+        <a href="/" class="rento-logo">
+            <span class="logo-icon">🚘</span>
+            <strong>RENTO</strong>
+        </a>
+
+        <nav class="rento-nav">
+            <a href="/">Trang chủ</a>
+            <a href="/cars">Thuê xe</a>
+            <a href="/guide">Hướng dẫn thuê xe</a>
+            <a href="/support">Hỗ trợ</a>
+        </nav>
+
+        <div class="header-user">
+            <span class="avatar">NT</span>
+            <div>
+                <strong>Nguyễn Minh Tú</strong>
+                <small>Tài khoản của tôi</small>
+            </div>
+            <span>⌄</span>
+        </div>
+    </header>
+
+    <div class="rento-body">
+        <aside class="rento-sidebar">
+            <div class="sidebar-profile">
+                <span class="avatar">NT</span>
+                <div>
+                    <strong>Nguyễn Minh Tú</strong>
+                    <small>Thành viên Bạc</small>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
+                <a href="/profile">🚘 &nbsp; Đơn thuê của tôi</a>
+                <a href="/contracts">▤ &nbsp; Hợp đồng</a>
+                <a href="/payments" class="active">▣ &nbsp; Thanh toán</a>
+                <a href="/reviews">☆ &nbsp; Đánh giá của tôi</a>
+                <a href="/support">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
+                <a href="/notifications">♧ &nbsp; Thông báo</a>
+                <a href="/account-info">♙ &nbsp; Thông tin cá nhân</a>
+            </nav>
+
+            <a href="/login" class="sidebar-logout">
+                ⇥ &nbsp; Đăng xuất
+            </a>
+        </aside>
+
+        <main class="rentals-main">
+            <h1>Thanh toán &amp; đặt cọc</h1>
+            <p class="page-subtitle">
+                Theo dõi giao dịch và các khoản hoàn trả.
+            </p>
+
+            <div class="payment-stats">
+                <div class="stat-card">
+                    <span class="stat-icon">▣</span>
+                    <div>
+                        <small>Đã thanh toán</small>
+                        <strong>18.450.000 ₫</strong>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <span class="stat-icon">♢</span>
+                    <div>
+                        <small>Đặt cọc đang giữ</small>
+                        <strong>0 ₫</strong>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <span class="stat-icon">✓</span>
+                    <div>
+                        <small>Đã hoàn tiền</small>
+                        <strong>30.000.000 ₫</strong>
+                    </div>
+                </div>
+            </div>
+
+            <section class="payment-history">
+                <h2>Lịch sử giao dịch</h2>
+
+                <div class="payment-table-scroll">
+                    <table class="payment-table">
+                        <thead>
+                            <tr>
+                                <th>Giao dịch</th>
+                                <th>Đơn thuê</th>
+                                <th>Phương thức</th>
+                                <th>Ngày</th>
+                                <th>Số tiền</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var payment in PaymentList)
+                            {
+                                <tr>
+                                    <td class="payment-id">@payment.Id</td>
+                                    <td>@payment.BookingId</td>
+                                    <td>@payment.Method</td>
+                                    <td>@payment.Date</td>
+                                    <td>@payment.Amount.ToString("N0") ₫</td>
+                                    <td>
+                                        <span class="payment-status @payment.StatusClass">
+                                            @payment.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+@code {
+    private readonly List<PaymentItem> PaymentList = new()
+    {
+        new()
+        {
+            Id = "#PAY-25051594",
+            BookingId = "#RT250515-0094",
+            Method = "Visa •••• 4582",
+            Date = "14/05/2025",
+            Amount = 11250000,
+            Status = "Đã thanh toán",
+            StatusClass = "paid"
+        },
+        new()
+        {
+            Id = "#REF-25051826",
+            BookingId = "#RT250515-0094",
+            Method = "Visa •••• 4582",
+            Date = "20/05/2025",
+            Amount = 15000000,
+            Status = "Đã hoàn tiền",
+            StatusClass = "refunded"
+        },
+        new()
+        {
+            Id = "#PAY-25040241",
+            BookingId = "#RT250402-0041",
+            Method = "MoMo",
+            Date = "01/04/2025",
+            Amount = 7200000,
+            Status = "Đã thanh toán",
+            StatusClass = "paid"
+        }
+    };
+
+    private class PaymentItem
+    {
+        public string Id { get; set; } = "";
+        public string BookingId { get; set; } = "";
+        public string Method { get; set; } = "";
+        public string Date { get; set; } = "";
+        public decimal Amount { get; set; }
+        public string Status { get; set; } = "";
+        public string StatusClass { get; set; } = "";
+    }
+}

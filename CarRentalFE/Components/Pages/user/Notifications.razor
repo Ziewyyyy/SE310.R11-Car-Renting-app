@@ -1,0 +1,192 @@
+
+@page "/notifications"
+@rendermode InteractiveServer
+@using System.Linq
+@using CarRentalFE.Components.Layout
+@layout EmptyLayout
+
+<PageTitle>Thông báo - RENTO</PageTitle>
+
+<div class="rento-app">
+    <header class="rento-header">
+        <a href="/" class="rento-logo">
+            <span class="logo-icon">🚘</span>
+            <strong>RENTO</strong>
+        </a>
+
+        <nav class="rento-nav">
+            <a href="/">Trang chủ</a>
+            <a href="/cars">Thuê xe</a>
+            <a href="/guide">Hướng dẫn thuê xe</a>
+            <a href="/support">Hỗ trợ</a>
+        </nav>
+
+        <div class="header-user">
+            <span class="avatar">NT</span>
+            <div>
+                <strong>Nguyễn Minh Tú</strong>
+                <small>Tài khoản của tôi</small>
+            </div>
+            <span>⌄</span>
+        </div>
+    </header>
+
+    <div class="rento-body">
+        <aside class="rento-sidebar">
+            <div class="sidebar-profile">
+                <span class="avatar">NT</span>
+                <div>
+                    <strong>Nguyễn Minh Tú</strong>
+                    <small>Thành viên Bạc</small>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
+                <a href="/profile">🚘 &nbsp; Đơn thuê của tôi</a>
+                <a href="/contracts">▤ &nbsp; Hợp đồng</a>
+                <a href="/payments">▣ &nbsp; Thanh toán</a>
+                <a href="/reviews">☆ &nbsp; Đánh giá của tôi</a>
+                <a href="/support">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
+                <a href="/notifications" class="active">♧ &nbsp; Thông báo</a>
+                <a href="/account-info">♙ &nbsp; Thông tin cá nhân</a>
+            </nav>
+
+            <a href="/login" class="sidebar-logout">
+                ⇥ &nbsp; Đăng xuất
+            </a>
+        </aside>
+
+        <main class="rentals-main">
+            <h1>Thông báo</h1>
+            <p class="page-subtitle">
+                Cập nhật mới nhất về hành trình và tài khoản.
+            </p>
+
+            <div class="rento-tabs notification-tabs">
+                <button class="@(SelectedTab == "all" ? "active" : "")"
+                        @onclick='() => SelectTab("all")'>
+                    Tất cả
+                </button>
+
+                <button class="@(SelectedTab == "unread" ? "active" : "")"
+                        @onclick='() => SelectTab("unread")'>
+                    Chưa đọc (@NotificationList.Count(n => !n.IsRead))
+                </button>
+
+                <button class="mark-all-read"
+                        disabled="@(!NotificationList.Any(n => !n.IsRead))"
+                        @onclick="MarkAllAsRead">
+                    Đánh dấu tất cả đã đọc
+                </button>
+            </div>
+
+            <div class="notification-list">
+                @foreach (var notification in FilteredNotifications)
+                {
+                    <div class="notification-item @(notification.IsRead ? "" : "unread")"
+                         @onclick="() => MarkAsRead(notification)">
+
+                        <span class="notification-icon">
+                            @notification.Icon
+                        </span>
+
+                        <div class="notification-content">
+                            <h3>@notification.Title</h3>
+                            <p>@notification.Description</p>
+                            <small>@notification.Time</small>
+                        </div>
+
+                        @if (!notification.IsRead)
+                        {
+                            <span class="notification-dot"></span>
+                        }
+                    </div>
+                }
+
+                @if (!FilteredNotifications.Any())
+                {
+                    <div class="notification-empty">
+                        Không có thông báo nào.
+                    </div>
+                }
+            </div>
+        </main>
+    </div>
+</div>
+
+@code {
+    private string SelectedTab = "all";
+
+    private List<NotificationItem> NotificationList = new()
+    {
+        new()
+        {
+            Id = 1,
+            Title = "Yêu cầu đặt xe đã được ghi nhận",
+            Description = "Đơn #RT250622-0186 đang chờ RENTO xác nhận.",
+            Time = "5 phút trước",
+            Icon = "🚘",
+            IsRead = false
+        },
+        new()
+        {
+            Id = 2,
+            Title = "Hoàn tiền đặt cọc thành công",
+            Description = "15.000.000 đ đã được hoàn vào thẻ Visa •••• 4582.",
+            Time = "20/05/2025",
+            Icon = "▣",
+            IsRead = false
+        },
+        new()
+        {
+            Id = 3,
+            Title = "Hợp đồng của bạn đã sẵn sàng",
+            Description = "Hợp đồng #HD-250515-094 có thể tải xuống.",
+            Time = "14/05/2025",
+            Icon = "▤",
+            IsRead = true
+        },
+        new()
+        {
+            Id = 4,
+            Title = "Hỗ trợ đã phản hồi",
+            Description = "Yêu cầu #SP-0156 đã có phản hồi mới.",
+            Time = "18/05/2025",
+            Icon = "ⓘ",
+            IsRead = true
+        }
+    };
+
+    private IEnumerable<NotificationItem> FilteredNotifications =>
+        NotificationList.Where(n =>
+            SelectedTab == "all" || !n.IsRead);
+
+    private void SelectTab(string tab)
+    {
+        SelectedTab = tab;
+    }
+
+    private void MarkAsRead(NotificationItem notification)
+    {
+        notification.IsRead = true;
+    }
+
+    private void MarkAllAsRead()
+    {
+        foreach (var notification in NotificationList)
+        {
+            notification.IsRead = true;
+        }
+    }
+
+    private class NotificationItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Time { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public bool IsRead { get; set; }
+    }
+}

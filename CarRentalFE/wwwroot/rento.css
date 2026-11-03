@@ -1,0 +1,1390 @@
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #071525;
+}
+
+.rento-app {
+    min-height: 100vh;
+    background: #f4f7fa;
+}
+
+.rento-header {
+    height: 68px;
+    background: #07121c;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5%;
+}
+
+.rento-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    text-decoration: none;
+    font-size: 19px;
+    letter-spacing: 1px;
+}
+
+.logo-icon {
+    display: grid;
+    place-items: center;
+    background: #25c1dc;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+}
+
+.rento-nav {
+    display: flex;
+    gap: 32px;
+}
+
+.rento-nav a {
+    color: #a9c3d6;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.rento-nav a:hover { color: white; }
+
+.header-user, .sidebar-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-user strong, .sidebar-profile strong {
+    display: block;
+    font-size: 12px;
+}
+
+.header-user small, .sidebar-profile small {
+    display: block;
+    font-size: 10px;
+    color: #8fa6b9;
+    margin-top: 5px;
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #176e84;
+    color: #24d3ed;
+    font-weight: bold;
+}
+
+.rento-body {
+    display: flex;
+    min-height: calc(100vh - 68px);
+}
+
+.rento-sidebar {
+    width: 215px;
+    flex-shrink: 0;
+    background: white;
+    border-right: 1px solid #e0e7ef;
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-profile {
+    padding: 0 5px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+}
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sidebar-menu a {
+    display: block;
+    padding: 12px 10px;
+    color: #647b92;
+    font-size: 12px;
+    text-decoration: none;
+    border-radius: 7px;
+}
+
+.sidebar-menu a:hover,
+.sidebar-menu a.active {
+    background: #e6f8fb;
+    color: #007e9c;
+    font-weight: 600;
+}
+
+.sidebar-logout {
+    margin-top: auto;
+    padding: 12px;
+    color: #e44c55;
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.rentals-main {
+    flex: 1;
+    min-width: 0;
+    padding: 40px 4%;
+}
+
+.rentals-main h1 {
+    font-size: 25px;
+    margin: 0 0 12px;
+    font-weight: 750;
+}
+
+.page-subtitle {
+    color: #7289a1;
+    font-size: 13px;
+    margin-bottom: 28px;
+}
+
+.rento-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border: 1px solid #dce5ef;
+    border-radius: 10px;
+    padding: 17px 15px;
+    min-height: 68px;
+}
+
+.stat-icon {
+    background: #e7f8fc;
+    color: #08a7ca;
+    padding: 10px;
+    border-radius: 9px;
+    font-size: 19px;
+}
+
+.stat-card small {
+    display: block;
+    font-size: 10px;
+    color: #8094a9;
+    margin-bottom: 5px;
+}
+
+.stat-card strong { font-size: 17px; }
+
+.rento-tabs {
+    display: flex;
+    gap: 22px;
+    border-bottom: 1px solid #dbe4ed;
+    overflow-x: auto;
+    margin-bottom: 18px;
+}
+
+.rento-tabs button {
+    border: none;
+    background: transparent;
+    color: #71869c;
+    padding: 0 0 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+.rento-tabs button.active {
+    color: #071525;
+    border-bottom: 2px solid #13b9d6;
+    font-weight: bold;
+}
+
+.rento-toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 14px;
+}
+
+.rento-toolbar input {
+    width: 270px;
+    padding: 12px;
+    border: 1px solid #dce5ef;
+    border-radius: 8px;
+    outline-color: #19bcd9;
+}
+
+.date-filter, .booking-actions button {
+    background: white;
+    border: 1px solid #dce5ef;
+    border-radius: 8px;
+    padding: 11px 16px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.booking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+
+.booking-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: white;
+    padding: 12px;
+    border: 1px solid #dce5ef;
+    border-radius: 11px;
+    min-height: 113px;
+}
+
+.booking-card > img {
+    width: 125px;
+    height: 88px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.booking-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.booking-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: #7b90a6;
+}
+
+.status-badge {
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.status-badge.pending {
+    background: #fff1d8;
+    color: #a67a31;
+}
+
+.status-badge.completed {
+    background: #dcf8ed;
+    color: #228c73;
+}
+
+.status-badge.cancelled {
+    background: #fbe7e9;
+    color: #b95a68;
+}
+
+.booking-info h3 {
+    font-size: 15px;
+    margin: 12px 0 9px;
+}
+
+.booking-info p {
+    font-size: 11px;
+    color: #7c91a8;
+    margin: 0;
+}
+
+.booking-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 9px;
+}
+
+.booking-actions small {
+    color: #8194a9;
+    font-size: 11px;
+}
+
+.booking-actions strong { font-size: 15px; }
+
+.booking-actions button:hover,
+.date-filter:hover {
+    border-color: #18b7d5;
+    color: #0097b7;
+}
+
+.empty-bookings {
+    padding: 50px;
+    text-align: center;
+    color: #71869c;
+    background: white;
+    border-radius: 10px;
+}
+
+.date-filter-panel {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    padding: 15px;
+    background: white;
+    margin-bottom: 15px;
+    border-radius: 8px;
+}
+
+.date-filter-panel label {
+    display: grid;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.date-filter-panel input,
+.date-filter-panel button {
+    padding: 8px;
+    border: 1px solid #dce5ef;
+    border-radius: 6px;
+}
+
+.rento-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: #0008;
+    display: grid;
+    place-items: center;
+    z-index: 1000;
+}
+
+.rento-modal {
+    background: white;
+    padding: 28px;
+    border-radius: 12px;
+    width: min(420px, 90vw);
+}
+
+.rento-modal button {
+    padding: 10px 22px;
+    background: #07121c;
+    color: white;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+@media (max-width: 900px) {
+    .rento-nav { display: none; }
+    .rento-stats { grid-template-columns: repeat(2, 1fr); }
+    .rentals-main { padding: 25px; }
+}
+
+@media (max-width: 600px) {
+    .rento-sidebar { display: none; }
+    .rento-stats { grid-template-columns: 1fr 1fr; }
+    .booking-card { flex-wrap: wrap; }
+    .booking-actions { width: 100%; }
+    .rento-toolbar input { width: 100%; }
+}
+
+
+/* CONTRACTS PAGE */
+
+.contract-tabs {
+    margin-top: 36px;
+    margin-bottom: 17px;
+}
+
+.contract-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #dce5ef;
+    border-radius: 11px;
+    background: #fff;
+}
+
+.contract-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+}
+
+.contract-table thead {
+    background: #f5f8fb;
+}
+
+.contract-table th {
+    padding: 18px 14px;
+    color: #71869c;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.contract-table td {
+    padding: 20px 14px;
+    border-top: 1px solid #e1e9f1;
+    color: #142337;
+}
+
+.contract-table th:last-child,
+.contract-table td:last-child {
+    text-align: center;
+}
+
+.contract-id {
+    font-weight: 700;
+    color: #071525;
+}
+
+.contract-status {
+    display: inline-block;
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.contract-status.signed {
+    background: #dcf8ed;
+    color: #18866c;
+}
+
+.contract-status.finished {
+    background: #eef2f6;
+    color: #63758d;
+}
+
+.contract-status.pending {
+    background: #fff1d8;
+    color: #a67a31;
+}
+
+.contract-action {
+    border: none;
+    background: transparent;
+    padding: 9px 12px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #071525;
+    cursor: pointer;
+    white-space: nowrap;
+    border-radius: 7px;
+}
+
+.contract-action:hover {
+    background: #e7f8fc;
+    color: #008cab;
+}
+
+.contract-action.sign {
+    background: #0bb5d3;
+    color: white;
+}
+
+.contract-action.sign:hover {
+    background: #0796b0;
+}
+
+.contract-empty {
+    text-align: center;
+    padding: 45px !important;
+    color: #71869c !important;
+}
+
+.contract-message {
+    margin-top: 20px;
+    padding: 14px 18px;
+    background: #e7f8fc;
+    color: #007f9c;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.contract-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.contract-modal-actions button {
+    padding: 10px 18px;
+    border: 1px solid #dce5ef;
+    background: white;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.contract-modal-actions .confirm-sign {
+    background: #08a9c9;
+    color: white;
+    border-color: #08a9c9;
+}
+
+@media (max-width: 900px) {
+    .contract-table {
+        min-width: 850px;
+    }
+}
+
+
+/* PAYMENTS PAGE */
+
+.payment-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.payment-history {
+    background: #fff;
+    border: 1px solid #dce5ef;
+    border-radius: 11px;
+    padding: 20px 16px 16px;
+}
+
+.payment-history h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    color: #071525;
+}
+
+.payment-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.payment-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 12px;
+}
+
+.payment-table thead {
+    background: #f4f7fa;
+}
+
+.payment-table th {
+    padding: 16px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #72869d;
+    white-space: nowrap;
+}
+
+.payment-table th:first-child {
+    border-top-left-radius: 10px;
+}
+
+.payment-table th:last-child {
+    border-top-right-radius: 10px;
+}
+
+.payment-table td {
+    padding: 18px 12px;
+    border-top: 1px solid #e0e8f0;
+    color: #17283c;
+    white-space: nowrap;
+}
+
+.payment-id {
+    font-weight: 700;
+    color: #071525 !important;
+}
+
+.payment-status {
+    display: inline-block;
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.payment-status.paid {
+    background: #dcf8ed;
+    color: #16856d;
+}
+
+.payment-status.refunded {
+    background: #d8f7fc;
+    color: #008fa9;
+}
+
+@media (max-width: 900px) {
+    .payment-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-table {
+        min-width: 800px;
+    }
+}
+
+
+/* REVIEWS PAGE */
+
+.review-eligible-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px;
+    background: white;
+    border: 1px solid #dce5ef;
+    border-left: 3px solid #19c5e4;
+    border-radius: 10px;
+    margin-top: 28px;
+    margin-bottom: 15px;
+}
+
+.review-eligible-card img {
+    width: 100px;
+    height: 68px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.review-eligible-info {
+    flex: 1;
+}
+
+.review-eligible-badge {
+    display: inline-block;
+    background: #d8f7fc;
+    color: #008ba5;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.review-eligible-info h3 {
+    margin: 8px 0;
+    font-size: 15px;
+}
+
+.review-eligible-info p {
+    margin: 0;
+    font-size: 11px;
+    color: #8094a9;
+}
+
+.write-review-btn {
+    background: #22bfdc;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-weight: 700;
+    color: #061725;
+    cursor: pointer;
+}
+
+.write-review-btn:hover {
+    background: #0ea5c3;
+}
+
+.reviews-history {
+    background: white;
+    border: 1px solid #dce5ef;
+    border-radius: 11px;
+    padding: 20px 16px 16px;
+}
+
+.reviews-history h2 {
+    font-size: 16px;
+    margin: 0 0 20px;
+}
+
+.review-item + .review-item {
+    border-top: 1px solid #e2e8f0;
+    margin-top: 20px;
+    padding-top: 20px;
+}
+
+.review-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.review-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.review-title strong {
+    font-size: 12px;
+}
+
+.review-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+    font-size: 14px;
+}
+
+.review-item-header small {
+    font-size: 10px;
+    color: #8094a9;
+}
+
+.review-content {
+    font-size: 12px;
+    color: #71869c;
+    margin: 18px 0 14px;
+}
+
+.review-response {
+    background: #f4f7fa;
+    padding: 13px;
+    border-radius: 8px;
+}
+
+.review-response strong {
+    font-size: 11px;
+    color: #00a4c7;
+}
+
+.review-response p {
+    margin: 6px 0 0;
+    color: #71869c;
+    font-size: 11px;
+}
+
+.review-modal {
+    width: min(480px, 90vw);
+}
+
+.review-rating-input {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0;
+}
+
+.review-rating-input button {
+    border: none;
+    background: transparent;
+    color: #cbd5e1;
+    font-size: 35px;
+    cursor: pointer;
+}
+
+.review-rating-input button.selected {
+    color: #f59e0b;
+}
+
+.review-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.review-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px;
+    border: 1px solid #dce5ef;
+    border-radius: 8px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.review-error {
+    color: #e11d48;
+    font-size: 12px;
+}
+
+.review-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.review-modal-actions button {
+    padding: 11px 18px;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.cancel-review {
+    background: white;
+    border: 1px solid #dce5ef;
+}
+
+.submit-review {
+    background: #20bfdc;
+    border: none;
+    font-weight: 700;
+}
+
+@media (max-width: 600px) {
+    .review-eligible-card {
+        flex-wrap: wrap;
+    }
+
+    .write-review-btn {
+        width: 100%;
+    }
+}
+
+
+/* SUPPORT PAGE */
+
+.support-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 16px;
+    margin-top: 28px;
+    align-items: start;
+}
+
+.support-left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+.support-panel {
+    background: #fff;
+    border: 1px solid #dce5ef;
+    border-radius: 11px;
+    padding: 20px 16px;
+    min-width: 0;
+}
+
+.support-panel h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 18px;
+    color: #071525;
+}
+
+.support-faq-item {
+    border-bottom: 1px solid #dce5ef;
+}
+
+.support-faq-question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px 0;
+    border: 0;
+    background: transparent;
+    color: #142337;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.support-faq-question:hover {
+    color: #009fbd;
+}
+
+.support-faq-answer {
+    margin: 0 0 16px;
+    color: #71869c;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.support-recent h3 {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 12px 0 20px;
+    border-top: 1px solid #dce5ef;
+    border-bottom: 1px solid #dce5ef;
+    margin: 0 0 0;
+}
+
+.support-ticket {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.support-ticket:last-child {
+    border-bottom: 0;
+}
+
+.support-ticket-status {
+    display: inline-block;
+    padding: 7px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.support-ticket-status.processing {
+    background: #fff1d8;
+    color: #a7781b;
+}
+
+.support-ticket-status.resolved {
+    background: #dcf8ed;
+    color: #18866c;
+}
+
+.support-ticket-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.support-ticket-info strong {
+    font-size: 11px;
+}
+
+.support-ticket-info small {
+    font-size: 10px;
+    color: #8ba0b5;
+}
+
+.support-form-panel {
+    padding: 20px 16px 16px;
+}
+
+.support-field {
+    margin-top: 18px;
+}
+
+.support-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 9px;
+}
+
+.support-field input,
+.support-field select,
+.support-field textarea {
+    width: 100%;
+    border: 1px solid #d8e2ed;
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 12px;
+    color: #142337;
+    outline: none;
+}
+
+.support-field input:focus,
+.support-field select:focus,
+.support-field textarea:focus {
+    border-color: #20bfdc;
+    box-shadow: 0 0 0 3px rgba(32,191,220,.1);
+}
+
+.support-field textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+.support-upload {
+    position: relative;
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px dashed #b8cde0;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.support-upload label {
+    cursor: pointer;
+}
+
+.support-upload input[type="file"] {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    font-size: 11px;
+}
+
+.support-upload small {
+    display: block;
+    margin-top: 8px;
+    color: #71869c;
+}
+
+.support-form-message {
+    margin: 12px 0;
+    font-size: 12px;
+    color: #007e99;
+}
+
+.support-submit {
+    width: 100%;
+    background: #20bfdc;
+    color: #071525;
+    border: none;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 26px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.support-submit:hover {
+    background: #0fa9c7;
+}
+
+@media (max-width: 900px) {
+    .support-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* NOTIFICATIONS PAGE */
+
+.notification-tabs {
+    margin-top: 30px;
+    margin-bottom: 16px;
+}
+
+.notification-tabs .mark-all-read {
+    color: #71869c;
+    font-size: 12px;
+    font-weight: 400;
+    padding-left: 10px;
+}
+
+.notification-tabs .mark-all-read:hover {
+    color: #009fbd;
+}
+
+.notification-tabs .mark-all-read:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.notification-list {
+    background: white;
+    border: 1px solid #dce5ef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 17px 16px;
+    min-height: 88px;
+    border-bottom: 1px solid #dce5ef;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background: #f7fbfd;
+}
+
+.notification-item.unread {
+    background: #f2fbfd;
+}
+
+.notification-item.unread:hover {
+    background: #eaf8fc;
+}
+
+.notification-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #e3f8fc;
+    color: #009bb9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-content h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: #071525;
+}
+
+.notification-content p {
+    font-size: 12px;
+    color: #71869c;
+    margin: 0 0 7px;
+}
+
+.notification-content small {
+    font-size: 11px;
+    color: #8094a9;
+}
+
+.notification-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b6d4;
+    margin-top: 5px;
+    flex-shrink: 0;
+}
+
+.notification-empty {
+    text-align: center;
+    padding: 45px 20px;
+    color: #8094a9;
+    font-size: 13px;
+}
+
+@media (max-width: 600px) {
+    .notification-item {
+        padding: 15px 12px;
+    }
+
+    .notification-content h3 {
+        font-size: 13px;
+    }
+
+    .notification-tabs {
+        flex-wrap: wrap;
+    }
+}
+
+
+/* ACCOUNT INFO PAGE */
+
+.account-grid {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 16px;
+    margin-top: 28px;
+    align-items: stretch;
+}
+
+.account-panel {
+    background: #fff;
+    border: 1px solid #dce5ef;
+    border-radius: 11px;
+    padding: 18px 16px;
+    min-width: 0;
+}
+
+.account-profile-layout {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+}
+
+.account-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.account-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #d9f7fc;
+    color: #008ba6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.account-avatar-add {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: #20bfdc;
+    color: white;
+    cursor: pointer;
+}
+
+.account-form-area {
+    flex: 1;
+    min-width: 0;
+}
+
+.account-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.account-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 7px;
+    color: #17283c;
+}
+
+.account-field input {
+    width: 100%;
+    height: 40px;
+    padding: 10px 12px;
+    border: 1px solid #dce5ef;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    color: #071525;
+    outline: none;
+    background: white;
+}
+
+.account-field input:focus {
+    border-color: #20bfdc;
+    box-shadow: 0 0 0 3px rgba(32, 191, 220, 0.1);
+}
+
+.account-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.account-actions button {
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.account-save {
+    background: #20bfdc;
+    border: none;
+    color: #071525;
+}
+
+.account-cancel {
+    border: none;
+    background: transparent;
+    color: #071525;
+}
+
+.account-security h2 {
+    font-size: 16px;
+    margin: 0 0 18px;
+    font-weight: 700;
+}
+
+.account-security .account-field {
+    margin-bottom: 14px;
+}
+
+.account-password {
+    position: relative;
+}
+
+.account-password input {
+    padding-right: 55px;
+}
+
+.account-password button {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #71869c;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.account-change-password {
+    background: #fff;
+    border: 1px solid #dce5ef;
+    border-radius: 8px;
+    padding: 11px 17px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.account-divider {
+    height: 1px;
+    background: #dce5ef;
+    margin: 22px 0;
+}
+
+.account-notification-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 13px 0;
+    border-bottom: 1px solid #dce5ef;
+}
+
+.account-notification-option label {
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.account-notification-option input {
+    accent-color: #20bfdc;
+    cursor: pointer;
+}
+
+.account-message {
+    margin: 12px 0;
+    font-size: 12px;
+    color: #008ba6;
+}
+
+@media (max-width: 1000px) {
+    .account-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .account-profile-layout {
+        flex-direction: column;
+    }
+
+    .account-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+

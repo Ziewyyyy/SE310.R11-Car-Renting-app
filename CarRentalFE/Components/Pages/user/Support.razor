@@ -1,0 +1,271 @@
+
+@page "/support"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Forms
+@using CarRentalFE.Components.Layout
+@layout EmptyLayout
+
+<PageTitle>Trung tâm hỗ trợ - RENTO</PageTitle>
+
+<div class="rento-app">
+    <header class="rento-header">
+        <a href="/" class="rento-logo">
+            <span class="logo-icon">🚘</span>
+            <strong>RENTO</strong>
+        </a>
+
+        <nav class="rento-nav">
+            <a href="/">Trang chủ</a>
+            <a href="/cars">Thuê xe</a>
+            <a href="/guide">Hướng dẫn thuê xe</a>
+            <a href="/support">Hỗ trợ</a>
+        </nav>
+
+        <div class="header-user">
+            <span class="avatar">NT</span>
+            <div>
+                <strong>Nguyễn Minh Tú</strong>
+                <small>Tài khoản của tôi</small>
+            </div>
+            <span>⌄</span>
+        </div>
+    </header>
+
+    <div class="rento-body">
+        <aside class="rento-sidebar">
+            <div class="sidebar-profile">
+                <span class="avatar">NT</span>
+                <div>
+                    <strong>Nguyễn Minh Tú</strong>
+                    <small>Thành viên Bạc</small>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
+                <a href="/profile">🚘 &nbsp; Đơn thuê của tôi</a>
+                <a href="/contracts">▤ &nbsp; Hợp đồng</a>
+                <a href="/payments">▣ &nbsp; Thanh toán</a>
+                <a href="/reviews">☆ &nbsp; Đánh giá của tôi</a>
+                <a href="/support" class="active">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
+                <a href="/notifications">♧ &nbsp; Thông báo</a>
+                <a href="/account-info">♙ &nbsp; Thông tin cá nhân</a>
+            </nav>
+
+            <a href="/login" class="sidebar-logout">
+                ⇥ &nbsp; Đăng xuất
+            </a>
+        </aside>
+
+        <main class="rentals-main">
+            <h1>Trung tâm hỗ trợ</h1>
+            <p class="page-subtitle">
+                RENTO luôn sẵn sàng giải đáp và đồng hành cùng bạn.
+            </p>
+
+            <div class="support-grid">
+                <div class="support-left">
+                    <section class="support-panel">
+                        <h2>Câu hỏi thường gặp</h2>
+
+                        @for (int i = 0; i < FaqList.Count; i++)
+                        {
+                            var index = i;
+                            var faq = FaqList[index];
+
+                            <div class="support-faq-item">
+                                <button type="button"
+                                        class="support-faq-question"
+                                        @onclick="() => ToggleFaq(index)">
+                                    <span>@faq.Question</span>
+                                    <span>@(OpenFaqIndex == index ? "⌃" : "⌄")</span>
+                                </button>
+
+                                @if (OpenFaqIndex == index)
+                                {
+                                    <p class="support-faq-answer">@faq.Answer</p>
+                                }
+                            </div>
+                        }
+                    </section>
+
+                    <section class="support-panel support-recent">
+                        <h3>Yêu cầu gần đây</h3>
+
+                        @foreach (var ticket in TicketList)
+                        {
+                            <div class="support-ticket">
+                                <span class="support-ticket-status @ticket.StatusClass">
+                                    @ticket.Status
+                                </span>
+
+                                <div class="support-ticket-info">
+                                    <strong>@ticket.Id - @ticket.Subject</strong>
+                                    <small>@ticket.UpdatedAt</small>
+                                </div>
+                            </div>
+                        }
+                    </section>
+                </div>
+
+                <section class="support-panel support-form-panel">
+                    <h2>Gửi yêu cầu hỗ trợ</h2>
+
+                    <div class="support-field">
+                        <label>Chủ đề *</label>
+                        <input placeholder="Bạn cần hỗ trợ về vấn đề gì?"
+                               @bind="Subject"
+                               @bind:event="oninput" />
+                    </div>
+
+                    <div class="support-field">
+                        <label>Danh mục *</label>
+                        <select @bind="Category">
+                            <option value="">Chọn danh mục</option>
+                            <option value="Đặt xe">Đặt xe</option>
+                            <option value="Thanh toán">Thanh toán</option>
+                            <option value="Đặt cọc & hoàn tiền">Đặt cọc & hoàn tiền</option>
+                            <option value="Hợp đồng">Hợp đồng</option>
+                            <option value="Thay đổi lịch thuê">Thay đổi lịch thuê</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+
+                    <div class="support-field">
+                        <label>Nội dung *</label>
+                        <textarea rows="6"
+                                  placeholder="Mô tả chi tiết vấn đề của bạn..."
+                                  @bind="Description"
+                                  @bind:event="oninput"></textarea>
+                    </div>
+
+                    <div class="support-upload">
+                        <label for="support-file">▤ &nbsp; Đính kèm tệp</label>
+                        <InputFile id="support-file"
+                                   OnChange="OnFileSelected" />
+                        @if (!string.IsNullOrEmpty(SelectedFileName))
+                        {
+                            <small>@SelectedFileName</small>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(FormMessage))
+                    {
+                        <p class="support-form-message">@FormMessage</p>
+                    }
+
+                    <button type="button"
+                            class="support-submit"
+                            @onclick="SubmitTicket">
+                        Gửi yêu cầu hỗ trợ
+                    </button>
+                </section>
+            </div>
+        </main>
+    </div>
+</div>
+
+@code {
+    private int? OpenFaqIndex;
+
+    private string Subject = "";
+    private string Category = "";
+    private string Description = "";
+    private string SelectedFileName = "";
+    private string FormMessage = "";
+
+    private readonly List<FaqItem> FaqList = new()
+    {
+        new()
+        {
+            Question = "Tôi cần giấy tờ gì để thuê xe?",
+            Answer = "Bạn cần giấy phép lái xe hợp lệ và giấy tờ tùy thân theo yêu cầu xác minh của RENTO."
+        },
+        new()
+        {
+            Question = "Khoản đặt cọc được hoàn khi nào?",
+            Answer = "Khoản đặt cọc được xử lý hoàn sau khi kết thúc chuyến đi, kiểm tra tình trạng xe và đối chiếu các khoản phát sinh."
+        },
+        new()
+        {
+            Question = "Làm thế nào để gia hạn chuyến đi?",
+            Answer = "Bạn có thể liên hệ bộ phận hỗ trợ để yêu cầu gia hạn. Việc gia hạn phụ thuộc vào lịch trống của xe."
+        },
+        new()
+        {
+            Question = "Chính sách hủy đơn như thế nào?",
+            Answer = "Điều kiện hủy và hoàn tiền phụ thuộc vào hợp đồng và chính sách áp dụng cho đơn thuê của bạn."
+        }
+    };
+
+    private List<TicketItem> TicketList = new()
+    {
+        new()
+        {
+            Id = "#SP-0184",
+            Subject = "Thay đổi giờ nhận xe",
+            Status = "Đang xử lý",
+            StatusClass = "processing",
+            UpdatedAt = "Cập nhật 20 phút trước"
+        },
+        new()
+        {
+            Id = "#SP-0156",
+            Subject = "Hoàn tiền đặt cọc",
+            Status = "Đã giải quyết",
+            StatusClass = "resolved",
+            UpdatedAt = "18/05/2025"
+        }
+    };
+
+    private void ToggleFaq(int index)
+    {
+        OpenFaqIndex = OpenFaqIndex == index ? null : index;
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        SelectedFileName = e.File.Name;
+    }
+
+    private void SubmitTicket()
+    {
+        if (string.IsNullOrWhiteSpace(Subject) ||
+            string.IsNullOrWhiteSpace(Category) ||
+            string.IsNullOrWhiteSpace(Description))
+        {
+            FormMessage = "Vui lòng nhập đầy đủ chủ đề, danh mục và nội dung.";
+            return;
+        }
+
+        TicketList.Insert(0, new TicketItem
+        {
+            Id = $"#SP-{TicketList.Count + 200:0000}",
+            Subject = Subject.Trim(),
+            Status = "Đang xử lý",
+            StatusClass = "processing",
+            UpdatedAt = "Vừa tạo (demo)"
+        });
+
+        Subject = "";
+        Category = "";
+        Description = "";
+        SelectedFileName = "";
+        FormMessage = "Đã thêm yêu cầu hỗ trợ vào danh sách demo.";
+    }
+
+    private class FaqItem
+    {
+        public string Question { get; set; } = "";
+        public string Answer { get; set; } = "";
+    }
+
+    private class TicketItem
+    {
+        public string Id { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string StatusClass { get; set; } = "";
+        public string UpdatedAt { get; set; } = "";
+    }
+}

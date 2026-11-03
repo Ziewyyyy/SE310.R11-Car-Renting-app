@@ -1,0 +1,275 @@
+
+@page "/contracts"
+@rendermode InteractiveServer
+@using System.Linq
+@using CarRentalFE.Components.Layout
+@layout EmptyLayout
+
+<PageTitle>Hợp đồng thuê xe - RENTO</PageTitle>
+
+<div class="rento-app">
+    <header class="rento-header">
+        <a href="/" class="rento-logo">
+            <span class="logo-icon">🚘</span>
+            <strong>RENTO</strong>
+        </a>
+
+        <nav class="rento-nav">
+            <a href="/">Trang chủ</a>
+            <a href="/cars">Thuê xe</a>
+            <a href="/guide">Hướng dẫn thuê xe</a>
+            <a href="/support">Hỗ trợ</a>
+        </nav>
+
+        <div class="header-user">
+            <span class="avatar">NT</span>
+            <div>
+                <strong>Nguyễn Minh Tú</strong>
+                <small>Tài khoản của tôi</small>
+            </div>
+            <span>⌄</span>
+        </div>
+    </header>
+
+    <div class="rento-body">
+        <aside class="rento-sidebar">
+            <div class="sidebar-profile">
+                <span class="avatar">NT</span>
+                <div>
+                    <strong>Nguyễn Minh Tú</strong>
+                    <small>Thành viên Bạc</small>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
+                <a href="/profile">🚘 &nbsp; Đơn thuê của tôi</a>
+                <a href="/contracts" class="active">▤ &nbsp; Hợp đồng</a>
+                <a href="/payments">▣ &nbsp; Thanh toán</a>
+                <a href="/reviews">☆ &nbsp; Đánh giá của tôi</a>
+                <a href="/support">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
+                <a href="/notifications">♧ &nbsp; Thông báo</a>
+                <a href="/account-info">♙ &nbsp; Thông tin cá nhân</a>
+            </nav>
+
+            <a href="/login" class="sidebar-logout">
+                ⇥ &nbsp; Đăng xuất
+            </a>
+        </aside>
+
+        <main class="rentals-main">
+            <h1>Hợp đồng thuê xe</h1>
+            <p class="page-subtitle">
+                Xem, ký và tải xuống hợp đồng của bạn.
+            </p>
+
+            <div class="rento-tabs contract-tabs">
+                <button class="@(SelectedTab == "all" ? "active" : "")"
+                        @onclick='() => SelectTab("all")'>
+                    Tất cả (@ContractList.Count)
+                </button>
+
+                <button class="@(SelectedTab == "pending" ? "active" : "")"
+                        @onclick='() => SelectTab("pending")'>
+                    Chờ ký (@ContractList.Count(c => c.Status == "Chờ ký"))
+                </button>
+
+                <button class="@(SelectedTab == "signed" ? "active" : "")"
+                        @onclick='() => SelectTab("signed")'>
+                    Đã ký (@ContractList.Count(c => c.Status == "Đã ký" || c.Status == "Đã kết thúc"))
+                </button>
+            </div>
+
+            <div class="contract-table-wrapper">
+                <table class="contract-table">
+                    <thead>
+                        <tr>
+                            <th>Mã hợp đồng</th>
+                            <th>Xe</th>
+                            <th>Thời gian thuê</th>
+                            <th>Ngày ký</th>
+                            <th>Trạng thái</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var contract in FilteredContracts)
+                        {
+                            <tr>
+                                <td class="contract-id">@contract.Id</td>
+                                <td>@contract.CarName</td>
+                                <td>@contract.RentalPeriod</td>
+                                <td>@contract.SignedDate</td>
+                                <td>
+                                    <span class="contract-status @contract.StatusClass">
+                                        @contract.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (contract.Status == "Chờ ký")
+                                    {
+                                        <button class="contract-action sign"
+                                                @onclick="() => OpenSignDialog(contract)">
+                                            Ký hợp đồng
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="contract-action"
+                                                @onclick="() => DownloadContract(contract)">
+                                            ↓ &nbsp; PDF
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+
+                        @if (!FilteredContracts.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="contract-empty">
+                                    Không có hợp đồng phù hợp.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Message))
+            {
+                <div class="contract-message">@Message</div>
+            }
+        </main>
+    </div>
+</div>
+
+@if (ContractToSign is not null)
+{
+    <div class="rento-modal-backdrop">
+        <div class="rento-modal">
+            <h2>Xác nhận ký hợp đồng</h2>
+
+            <p>
+                Bạn muốn xác nhận ký hợp đồng
+                <strong>@ContractToSign.Id</strong>?
+            </p>
+
+            <p>Xe: @ContractToSign.CarName</p>
+
+            <div class="contract-modal-actions">
+                <button @onclick="CancelSign">Hủy</button>
+                <button class="confirm-sign" @onclick="ConfirmSign">
+                    Xác nhận ký
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string SelectedTab = "all";
+    private string Message = "";
+    private ContractItem? ContractToSign;
+
+    private List<ContractItem> ContractList = new()
+    {
+        new()
+        {
+            Id = "#HD-250515-094",
+            CarName = "Audi Q7 Premium",
+            RentalPeriod = "15/05 – 18/05/2025",
+            SignedDate = "14/05/2025",
+            Status = "Đã ký",
+            StatusClass = "signed"
+        },
+        new()
+        {
+            Id = "#HD-250402-041",
+            CarName = "Porsche Panamera 4S",
+            RentalPeriod = "02/04 – 04/04/2025",
+            SignedDate = "01/04/2025",
+            Status = "Đã kết thúc",
+            StatusClass = "finished"
+        },
+        new()
+        {
+            Id = "#HD-250622-186",
+            CarName = "BMW 430i M Sport",
+            RentalPeriod = "22/06 – 25/06/2025",
+            SignedDate = "—",
+            Status = "Chờ ký",
+            StatusClass = "pending"
+        },
+        new()
+        {
+            Id = "#HD-250301-032",
+            CarName = "Mercedes-Benz C200",
+            RentalPeriod = "01/03 – 04/03/2025",
+            SignedDate = "28/02/2025",
+            Status = "Đã ký",
+            StatusClass = "signed"
+        },
+        new()
+        {
+            Id = "#HD-250210-018",
+            CarName = "BMW 430i M Sport",
+            RentalPeriod = "10/02 – 12/02/2025",
+            SignedDate = "09/02/2025",
+            Status = "Đã ký",
+            StatusClass = "signed"
+        }
+    };
+
+    private IEnumerable<ContractItem> FilteredContracts =>
+        ContractList.Where(c =>
+            SelectedTab == "all"
+            || (SelectedTab == "pending" && c.Status == "Chờ ký")
+            || (SelectedTab == "signed" &&
+                (c.Status == "Đã ký" || c.Status == "Đã kết thúc")));
+
+    private void SelectTab(string tab)
+    {
+        SelectedTab = tab;
+        Message = "";
+    }
+
+    private void OpenSignDialog(ContractItem contract)
+    {
+        ContractToSign = contract;
+    }
+
+    private void CancelSign()
+    {
+        ContractToSign = null;
+    }
+
+    private void ConfirmSign()
+    {
+        if (ContractToSign is null)
+            return;
+
+        ContractToSign.Status = "Đã ký";
+        ContractToSign.StatusClass = "signed";
+        ContractToSign.SignedDate = DateTime.Now.ToString("dd/MM/yyyy");
+
+        Message = $"Đã cập nhật trạng thái ký mẫu cho {ContractToSign.Id}.";
+        ContractToSign = null;
+    }
+
+    private void DownloadContract(ContractItem contract)
+    {
+        Message = $"Chưa có file PDF cho hợp đồng {contract.Id}.";
+    }
+
+    private class ContractItem
+    {
+        public string Id { get; set; } = "";
+        public string CarName { get; set; } = "";
+        public string RentalPeriod { get; set; } = "";
+        public string SignedDate { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string StatusClass { get; set; } = "";
+    }
+}

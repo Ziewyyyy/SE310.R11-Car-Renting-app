@@ -1,0 +1,289 @@
+
+@page "/account-info"
+@rendermode InteractiveServer
+@using CarRentalFE.Components.Layout
+@layout EmptyLayout
+
+<PageTitle>Thông tin cá nhân - RENTO</PageTitle>
+
+<div class="rento-app">
+    <header class="rento-header">
+        <a href="/" class="rento-logo">
+            <span class="logo-icon">🚘</span>
+            <strong>RENTO</strong>
+        </a>
+
+        <nav class="rento-nav">
+            <a href="/">Trang chủ</a>
+            <a href="/cars">Thuê xe</a>
+            <a href="/guide">Hướng dẫn thuê xe</a>
+            <a href="/support">Hỗ trợ</a>
+        </nav>
+
+        <div class="header-user">
+            <span class="avatar">NT</span>
+            <div>
+                <strong>@SavedFullName</strong>
+                <small>Tài khoản của tôi</small>
+            </div>
+            <span>⌄</span>
+        </div>
+    </header>
+
+    <div class="rento-body">
+        <aside class="rento-sidebar">
+            <div class="sidebar-profile">
+                <span class="avatar">NT</span>
+                <div>
+                    <strong>@SavedFullName</strong>
+                    <small>Thành viên Bạc</small>
+                </div>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
+                <a href="/profile">🚘 &nbsp; Đơn thuê của tôi</a>
+                <a href="/contracts">▤ &nbsp; Hợp đồng</a>
+                <a href="/payments">▣ &nbsp; Thanh toán</a>
+                <a href="/reviews">☆ &nbsp; Đánh giá của tôi</a>
+                <a href="/support">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
+                <a href="/notifications">♧ &nbsp; Thông báo</a>
+                <a href="/account-info" class="active">♙ &nbsp; Thông tin cá nhân</a>
+            </nav>
+
+            <a href="/login" class="sidebar-logout">
+                ⇥ &nbsp; Đăng xuất
+            </a>
+        </aside>
+
+        <main class="rentals-main">
+            <h1>Thông tin cá nhân</h1>
+            <p class="page-subtitle">
+                Quản lý hồ sơ và bảo mật tài khoản.
+            </p>
+
+            <div class="account-grid">
+
+                <section class="account-panel account-profile">
+                    <div class="account-profile-layout">
+                        <div class="account-avatar-wrapper">
+                            <div class="account-avatar">NT</div>
+                            <button type="button"
+                                    class="account-avatar-add"
+                                    title="Chức năng đổi ảnh chưa được kết nối">
+                                +
+                            </button>
+                        </div>
+
+                        <div class="account-form-area">
+                            <div class="account-fields">
+                                <div class="account-field">
+                                    <label>Họ và tên</label>
+                                    <input @bind="FullName"
+                                           @bind:event="oninput" />
+                                </div>
+
+                                <div class="account-field">
+                                    <label>Số điện thoại</label>
+                                    <input type="tel"
+                                           @bind="Phone"
+                                           @bind:event="oninput" />
+                                </div>
+
+                                <div class="account-field">
+                                    <label>Email</label>
+                                    <input type="email"
+                                           @bind="Email"
+                                           @bind:event="oninput" />
+                                </div>
+
+                                <div class="account-field">
+                                    <label>Ngày sinh</label>
+                                    <input placeholder="dd/MM/yyyy"
+                                           @bind="BirthDate"
+                                           @bind:event="oninput" />
+                                </div>
+
+                                <div class="account-field">
+                                    <label>Địa chỉ</label>
+                                    <input @bind="Address"
+                                           @bind:event="oninput" />
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(ProfileMessage))
+                            {
+                                <p class="account-message">@ProfileMessage</p>
+                            }
+
+                            <div class="account-actions">
+                                <button type="button"
+                                        class="account-save"
+                                        @onclick="SaveProfile">
+                                    Lưu thay đổi
+                                </button>
+
+                                <button type="button"
+                                        class="account-cancel"
+                                        @onclick="CancelChanges">
+                                    Hủy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="account-panel account-security">
+                    <h2>Bảo mật tài khoản</h2>
+
+                    <div class="account-field">
+                        <label>Mật khẩu hiện tại</label>
+                        <div class="account-password">
+                            <input type="@(ShowCurrentPassword ? "text" : "password")"
+                                   @bind="CurrentPassword" />
+                            <button type="button"
+                                    @onclick="() => ShowCurrentPassword = !ShowCurrentPassword">
+                                @(ShowCurrentPassword ? "Ẩn" : "👁")
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="account-field">
+                        <label>Mật khẩu mới</label>
+                        <div class="account-password">
+                            <input type="@(ShowNewPassword ? "text" : "password")"
+                                   placeholder="Tối thiểu 8 ký tự"
+                                   @bind="NewPassword" />
+                            <button type="button"
+                                    @onclick="() => ShowNewPassword = !ShowNewPassword">
+                                @(ShowNewPassword ? "Ẩn" : "👁")
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="button"
+                            class="account-change-password"
+                            @onclick="ChangePassword">
+                        Đổi mật khẩu
+                    </button>
+
+                    @if (!string.IsNullOrEmpty(PasswordMessage))
+                    {
+                        <p class="account-message">@PasswordMessage</p>
+                    }
+
+                    <div class="account-divider"></div>
+
+                    <h2>Thông báo</h2>
+
+                    <div class="account-notification-option">
+                        <label for="notify-booking">Cập nhật đơn thuê</label>
+                        <input id="notify-booking"
+                               type="checkbox"
+                               @bind="NotifyBooking" />
+                    </div>
+
+                    <div class="account-notification-option">
+                        <label for="notify-promo">Ưu đãi và tin mới</label>
+                        <input id="notify-promo"
+                               type="checkbox"
+                               @bind="NotifyPromotions" />
+                    </div>
+
+                    <div class="account-notification-option">
+                        <label for="notify-pickup">Nhắc lịch nhận xe</label>
+                        <input id="notify-pickup"
+                               type="checkbox"
+                               @bind="NotifyPickup" />
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+</div>
+
+@code {
+    private string SavedFullName = "Nguyễn Minh Tú";
+
+    private string FullName = "Nguyễn Minh Tú";
+    private string Phone = "0908 123 456";
+    private string Email = "minhtu@gmail.com";
+    private string BirthDate = "18/09/1992";
+    private string Address = "25 Nguyễn Huệ, Quận 1, TP.HCM";
+
+    private string SavedPhone = "0908 123 456";
+    private string SavedEmail = "minhtu@gmail.com";
+    private string SavedBirthDate = "18/09/1992";
+    private string SavedAddress = "25 Nguyễn Huệ, Quận 1, TP.HCM";
+
+    private string ProfileMessage = "";
+
+    private string CurrentPassword = "";
+    private string NewPassword = "";
+    private string PasswordMessage = "";
+
+    private bool ShowCurrentPassword;
+    private bool ShowNewPassword;
+
+    private bool NotifyBooking = true;
+    private bool NotifyPromotions = false;
+    private bool NotifyPickup = true;
+
+    private void SaveProfile()
+    {
+        if (string.IsNullOrWhiteSpace(FullName) ||
+            string.IsNullOrWhiteSpace(Phone) ||
+            string.IsNullOrWhiteSpace(Email))
+        {
+            ProfileMessage = "Vui lòng nhập đầy đủ họ tên, số điện thoại và email.";
+            return;
+        }
+
+        if (!System.Net.Mail.MailAddress.TryCreate(Email, out var mail) ||
+            mail.Address != Email)
+        {
+            ProfileMessage = "Email không hợp lệ.";
+            return;
+        }
+
+        SavedFullName = FullName.Trim();
+        SavedPhone = Phone.Trim();
+        SavedEmail = Email.Trim();
+        SavedBirthDate = BirthDate.Trim();
+        SavedAddress = Address.Trim();
+
+        ProfileMessage = "Đã lưu thay đổi trong phiên demo.";
+    }
+
+    private void CancelChanges()
+    {
+        FullName = SavedFullName;
+        Phone = SavedPhone;
+        Email = SavedEmail;
+        BirthDate = SavedBirthDate;
+        Address = SavedAddress;
+
+        ProfileMessage = "";
+    }
+
+    private void ChangePassword()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentPassword))
+        {
+            PasswordMessage = "Vui lòng nhập mật khẩu hiện tại.";
+            return;
+        }
+
+        if (NewPassword.Length < 8)
+        {
+            PasswordMessage = "Mật khẩu mới phải có ít nhất 8 ký tự.";
+            return;
+        }
+
+        PasswordMessage =
+            "Đã kiểm tra dữ liệu mẫu. Cần kết nối API để đổi mật khẩu thực sự.";
+
+        CurrentPassword = "";
+        NewPassword = "";
+    }
+}

@@ -1,0 +1,176 @@
+@inherits LayoutComponentBase
+
+<div class="rento-app @(SidebarCollapsed ? "sidebar-collapsed" : "")">
+    <!-- SIDEBAR -->
+    <aside class="rento-sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-logo">R</div>
+            <div class="brand-text">
+                <strong>RENTO</strong>
+                <span>CAR RENTAL SYSTEM</span>
+            </div>
+            <button class="sidebar-toggle" @onclick="ToggleSidebar">☰</button>
+        </div>
+
+        <nav class="sidebar-navigation">
+            <div class="nav-section-title">TỔNG QUAN</div>
+
+            <NavLink href="/dashboard" class="nav-item" Match="NavLinkMatch.All">
+                <span class="nav-icon">▦</span>
+                <span>Bảng điều khiển</span>
+            </NavLink>
+
+            <div class="nav-section-title">QUẢN LÝ</div>
+
+            <NavLink href="/accounts" class="nav-item">
+                <span class="nav-icon">♙</span>
+                <span>Tài khoản</span>
+            </NavLink>
+
+            <NavLink href="/vehicles" class="nav-item">
+                <span class="nav-icon">▰</span>
+                <span>Quản lý xe</span>
+                <span class="nav-count">128</span>
+            </NavLink>
+
+            <NavLink href="/rentals" class="nav-item">
+                <span class="nav-icon">▣</span>
+                <span>Đơn thuê xe</span>
+                <span class="nav-count">12</span>
+            </NavLink>
+
+            <NavLink href="/returns" class="nav-item">
+                <span class="nav-icon">▤</span>
+                <span>Trả xe &amp; Hợp đồng</span>
+            </NavLink>
+
+            <NavLink href="/payments" class="nav-item">
+                <span class="nav-icon">▱</span>
+                <span>Thanh toán</span>
+            </NavLink>
+
+            <div class="nav-section-title">KHÁCH HÀNG</div>
+
+            <NavLink href="/customers" class="nav-item">
+                <span class="nav-icon">♙</span>
+                <span>Hồ sơ khách hàng</span>
+            </NavLink>
+
+            <NavLink href="/support" class="nav-item">
+                <span class="nav-icon">♧</span>
+                <span>Hỗ trợ</span>
+                <span class="notification-dot"></span>
+            </NavLink>
+
+            <NavLink href="/reviews" class="nav-item">
+                <span class="nav-icon">☆</span>
+<span>Đánh giá</span>
+            </NavLink>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <button class="logout-button" @onclick="Logout" title="Đăng xuất">
+                <span class="logout-icon">⇥</span>
+                <span class="logout-label">Đăng xuất</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="rento-main">
+
+        <header class="topbar">
+            <div class="breadcrumb">
+                <span>RENTO</span>
+                <span class="breadcrumb-arrow">›</span>
+                <strong>Bảng điều khiển</strong>
+            </div>
+
+            <div class="topbar-right">
+                <div class="global-search">
+                    <span>⌕</span>
+                    <input placeholder="Tìm kiếm đơn thuê, khách..."
+                           @bind="SearchText"
+                           @bind:event="oninput" />
+                    <kbd>⌘ K</kbd>
+                </div>
+
+                <div class="topbar-divider"></div>
+
+                <div class="notification-wrapper">
+                    <button class="topbar-icon" @onclick="ToggleNotifications">
+                        ♧
+                        <span class="notification-indicator"></span>
+                    </button>
+
+                    @if (ShowNotifications)
+                    {
+                        <div class="notification-popup">
+                            <strong>Thông báo</strong>
+                            <p>Bạn có 12 đơn thuê đang chờ xử lý.</p>
+                            <p>Có 3 yêu cầu hỗ trợ mới.</p>
+                        </div>
+                    }
+                </div>
+
+                <div class="topbar-divider"></div>
+
+                <div class="admin-profile">
+                    <div class="admin-avatar">HM</div>
+                    <div class="admin-info">
+                        <strong>Hoàng Minh</strong>
+                        <span>Quản trị viên</span>
+                    </div>
+                    <button class="profile-menu" @onclick="ToggleProfile" aria-label="Mở menu tài khoản">⌄</button>
+                    @if (ShowProfile)
+                    {
+                        <div class="profile-popup">
+                            <strong>Hoàng Minh</strong>
+                            <span>Quản trị viên</span>
+                            <a href="/profile">Hồ sơ cá nhân</a>
+                            <button type="button" @onclick="Logout">Đăng xuất</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </header>
+
+        <div class="page-content">
+            @Body
+        </div>
+
+    </main>
+</div>
+
+@code {
+    private bool SidebarCollapsed;
+    private bool ShowNotifications;
+    private bool ShowProfile;
+    private string SearchText = "";
+
+    private void ToggleSidebar()
+    {
+        SidebarCollapsed = !SidebarCollapsed;
+    }
+
+    private void ToggleNotifications()
+    {
+        ShowNotifications = !ShowNotifications;
+        ShowProfile = false;
+    }
+
+    private void ToggleProfile()
+    {
+        ShowProfile = !ShowProfile;
+        ShowNotifications = false;
+    }
+
+    private void Logout()
+    {
+        // Tích hợp chức năng đăng xuất với Authentication
+        Navigation.NavigateTo("/login");
+    }
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = default!;
+}

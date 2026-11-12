@@ -1,0 +1,389 @@
+@page "/dashboard"
+@layout AdminLayout
+@using Microsoft.AspNetCore.Components
+
+<PageTitle>RENTO - Bảng điều khiển</PageTitle>
+
+<div class="dashboard">
+
+    <!-- PAGE HEADING -->
+    <div class="dashboard-heading">
+        <div>
+            <span class="eyebrow">PHÂN TÍCH KINH DOANH</span>
+            <h1>Tổng quan vận hành</h1>
+            <p>Số liệu minh họa cho giao diện quản trị; chưa kết nối API.</p>
+        </div>
+
+        <div class="heading-actions">
+            <select class="date-select" @bind="SelectedPeriod">
+                <option value="7 ngày qua">7 ngày qua</option>
+                <option value="30 ngày qua">30 ngày qua</option>
+                <option value="90 ngày qua">90 ngày qua</option>
+                <option value="Năm nay">Năm nay</option>
+            </select>
+
+            <button class="export-button" @onclick="ExportReport">
+                <span>↓</span>
+                Xuất báo cáo
+            </button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ExportMessage))
+    {
+        <div class="dashboard-message">@ExportMessage</div>
+    }
+
+    <!-- STATISTICS CARDS -->
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <span>Doanh thu tháng</span>
+                <div class="stat-icon cyan">▤</div>
+            </div>
+            <h2>428,6 triệu ₫</h2>
+            <div class="stat-footer">
+                <span class="positive">↑ 12,4%</span>
+                <span>so với tháng trước</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <span>Đơn thuê mới</span>
+                <div class="stat-icon blue">▣</div>
+            </div>
+            <h2>86</h2>
+            <div class="stat-footer">
+                <span class="positive">↑ 8,2%</span>
+                <span>18 đơn trong tuần</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+<span>Xe đang cho thuê</span>
+                <div class="stat-icon green">▰</div>
+            </div>
+            <h2>54</h2>
+            <div class="stat-footer">
+                <span class="positive">↑ 4,1%</span>
+                <span>42,2% tổng đội xe</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <span>Đơn chờ xử lý</span>
+                <div class="stat-icon orange">◷</div>
+            </div>
+            <h2>12</h2>
+            <div class="stat-footer">
+                <span class="negative">↓ 3</span>
+                <span>cần xác nhận hôm nay</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CHART AND VEHICLE RANKING -->
+    <div class="analytics-grid">
+
+        <!-- REVENUE CHART -->
+        <section class="panel revenue-panel">
+            <div class="panel-heading">
+                <div>
+                    <h3>Doanh thu theo giai đoạn mẫu</h3>
+                    <p>Doanh thu thực nhận từ đơn thuê hoàn thành</p>
+                </div>
+
+                <div class="chart-legend">
+                    <span><i class="legend-dot revenue-dot"></i>Doanh thu</span>
+                    <span><i class="legend-dot target-dot"></i>Mục tiêu</span>
+                </div>
+            </div>
+
+            <div class="chart-summary">
+                <strong>358.400.000 ₫</strong>
+                <span>↑ 9,8%</span>
+            </div>
+
+            <div class="revenue-chart">
+                <svg viewBox="0 0 700 310"
+                     preserveAspectRatio="none"
+                     class="chart-svg">
+
+                    <defs>
+                        <linearGradient id="revenueGradient"
+                                        x1="0" y1="0"
+                                        x2="0" y2="1">
+                            <stop offset="0%"
+                                  stop-color="#16c4e6"
+                                  stop-opacity=".28" />
+                            <stop offset="100%"
+                                  stop-color="#16c4e6"
+                                  stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- GRID -->
+                    <line x1="55" y1="35" x2="690" y2="35" class="grid-line"/>
+                    <line x1="55" y1="95" x2="690" y2="95" class="grid-line"/>
+                    <line x1="55" y1="155" x2="690" y2="155" class="grid-line"/>
+                    <line x1="55" y1="215" x2="690" y2="215" class="grid-line"/>
+                    <line x1="55" y1="275" x2="690" y2="275" class="grid-line"/>
+
+                    <!-- Y LABELS -->
+                    <text x="5" y="39" class="axis-label">80tr</text>
+                    <text x="5" y="99" class="axis-label">60tr</text>
+                    <text x="5" y="159" class="axis-label">40tr</text>
+                    <text x="5" y="219" class="axis-label">20tr</text>
+<text x="5" y="279" class="axis-label">0tr</text>
+
+                    <!-- REVENUE AREA -->
+                    <path class="chart-area"
+                          d="M55 230
+                             C95 220 110 205 145 210
+                             S190 185 230 165
+                             S280 195 325 170
+                             S375 95 415 105
+                             S455 130 495 90
+                             S550 85 580 75
+                             S630 25 690 45
+                             L690 275 L55 275 Z" />
+
+                    <!-- REVENUE LINE -->
+                    <path class="chart-line"
+                          d="M55 230
+                             C95 220 110 205 145 210
+                             S190 185 230 165
+                             S280 195 325 170
+                             S375 95 415 105
+                             S455 130 495 90
+                             S550 85 580 75
+                             S630 25 690 45" />
+
+                    <!-- LAST POINT -->
+                    <circle cx="690" cy="45" r="5" class="chart-point"/>
+                    <circle cx="690" cy="45" r="10" class="chart-point-halo"/>
+
+                    <!-- X LABELS -->
+                    <text x="55" y="300" class="axis-label">05/07</text>
+                    <text x="155" y="300" class="axis-label">06/07</text>
+                    <text x="255" y="300" class="axis-label">07/07</text>
+                    <text x="355" y="300" class="axis-label">08/07</text>
+                    <text x="455" y="300" class="axis-label">09/07</text>
+                    <text x="555" y="300" class="axis-label">10/07</text>
+                    <text x="650" y="300" class="axis-label">11/07</text>
+                </svg>
+
+                <div class="chart-tooltip">
+                    <strong>72.400.000 ₫</strong>
+                    <span>Chủ nhật, 28/07</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- MOST RENTED VEHICLES -->
+        <section class="panel vehicle-panel">
+            <div class="panel-heading">
+                <div>
+                    <h3>Xe được thuê nhiều nhất</h3>
+                    <p>Theo số lượt thuê tháng này</p>
+                </div>
+            </div>
+
+            <div class="vehicle-ranking">
+                @foreach (var vehicle in Vehicles)
+                {
+                    <div class="vehicle-item">
+                        <div class="vehicle-info">
+                            <span>@vehicle.Name</span>
+                            <span>@vehicle.Rentals lượt</span>
+                        </div>
+
+                        <div class="progress-track">
+                            <div class="progress-fill"
+                                 style="@($"width: {vehicle.Percentage}%")">
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+</section>
+
+    </div>
+
+    <!-- BOTTOM INFORMATION -->
+    <div class="bottom-grid">
+
+        <!-- RECENT RENTALS -->
+        <section class="panel recent-panel">
+            <div class="panel-heading">
+                <div>
+                    <h3>Đơn thuê gần đây</h3>
+                    <p>Theo dõi các giao dịch mới nhất</p>
+                </div>
+                <a href="/rentals" class="view-all">Xem tất cả →</a>
+            </div>
+
+            <div class="table-container">
+                <table class="rental-table">
+                    <thead>
+                        <tr>
+                            <th>MÃ ĐƠN</th>
+                            <th>KHÁCH HÀNG</th>
+                            <th>XE THUÊ</th>
+                            <th>NGÀY THUÊ</th>
+                            <th>GIÁ TRỊ</th>
+                            <th>TRẠNG THÁI</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var rental in RecentRentals)
+                        {
+                            <tr>
+                                <td class="order-id">@rental.Id</td>
+                                <td>@rental.Customer</td>
+                                <td>@rental.Vehicle</td>
+                                <td>@rental.Date</td>
+                                <td class="amount">@rental.Amount</td>
+                                <td>
+                                    <span class="status-badge @rental.StatusClass">
+                                        @rental.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- QUICK OVERVIEW -->
+        <section class="panel overview-panel">
+            <div class="panel-heading">
+                <div>
+                    <h3>Tình trạng đội xe</h3>
+                    <p>Thống kê phân bổ xe hiện tại</p>
+                </div>
+            </div>
+
+            <div class="fleet-total">
+                <strong>128</strong>
+                <span>Tổng số xe</span>
+            </div>
+
+            <div class="fleet-progress">
+                <div class="fleet-segment rented-segment"></div>
+                <div class="fleet-segment available-segment"></div>
+                <div class="fleet-segment maintenance-segment"></div>
+            </div>
+
+            <div class="fleet-legend">
+                <div>
+                    <i class="fleet-dot rented-dot"></i>
+                    <span>Đang cho thuê</span>
+                    <strong>54</strong>
+                </div>
+
+                <div>
+                    <i class="fleet-dot available-dot"></i>
+                    <span>Sẵn sàng</span>
+                    <strong>62</strong>
+                </div>
+
+                <div>
+<i class="fleet-dot maintenance-dot"></i>
+                    <span>Bảo trì</span>
+                    <strong>12</strong>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+</div>
+
+@code {
+    private string SelectedPeriod = "30 ngày qua";
+
+    private string ExportMessage = "";
+
+    private class VehicleStat
+    {
+        public string Name { get; set; } = "";
+        public int Rentals { get; set; }
+        public int Percentage { get; set; }
+    }
+
+    private class RentalItem
+    {
+        public string Id { get; set; } = "";
+        public string Customer { get; set; } = "";
+        public string Vehicle { get; set; } = "";
+        public string Date { get; set; } = "";
+        public string Amount { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string StatusClass { get; set; } = "";
+    }
+
+    private List<VehicleStat> Vehicles = new()
+    {
+        new() { Name = "VinFast VF 8", Rentals = 18, Percentage = 100 },
+        new() { Name = "Toyota Camry", Rentals = 15, Percentage = 83 },
+        new() { Name = "Mercedes C200", Rentals = 12, Percentage = 67 },
+        new() { Name = "Mazda CX-5", Rentals = 9, Percentage = 50 }
+    };
+
+    private List<RentalItem> RecentRentals = new()
+    {
+        new()
+        {
+            Id = "#RT-2026-001",
+            Customer = "Nguyễn Văn An",
+            Vehicle = "VinFast VF 8",
+            Date = "11/07/2026",
+            Amount = "2.500.000 ₫",
+            Status = "Đang thuê",
+            StatusClass = "status-active"
+        },
+        new()
+        {
+            Id = "#RT-2026-002",
+            Customer = "Trần Minh Anh",
+            Vehicle = "Toyota Camry",
+            Date = "10/07/2026",
+            Amount = "3.200.000 ₫",
+            Status = "Hoàn thành",
+            StatusClass = "status-completed"
+        },
+        new()
+        {
+            Id = "#RT-2026-003",
+            Customer = "Lê Hoàng Nam",
+            Vehicle = "Mazda CX-5",
+            Date = "10/07/2026",
+            Amount = "1.800.000 ₫",
+            Status = "Chờ xử lý",
+            StatusClass = "status-pending"
+        },
+        new()
+        {
+            Id = "#RT-2026-004",
+            Customer = "Phạm Thu Hà",
+            Vehicle = "Mercedes C200",
+            Date = "09/07/2026",
+            Amount = "4.500.000 ₫",
+            Status = "Đang thuê",
+            StatusClass = "status-active"
+        }
+    };
+
+    private void ExportReport()
+    {
+        ExportMessage = $"Chức năng xuất file chưa được kết nối. Khoảng thời gian đang chọn: {SelectedPeriod}."; 
+    }
+}

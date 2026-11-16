@@ -1,9 +1,9 @@
-
-@page "/payments"
+@page "/user/payments"
 @rendermode InteractiveServer
 @using System.Linq
 @using CarRentalFE.Components.Layout
 @layout EmptyLayout
+@inject NavigationManager Navigation
 
 <PageTitle>Thanh toán & đặt cọc - RENTO</PageTitle>
 
@@ -42,14 +42,14 @@
             </div>
 
             <nav class="sidebar-menu">
-                <a href="/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
-                <a href="/profile">🚘 &nbsp; Đơn thuê của tôi</a>
-                <a href="/contracts">▤ &nbsp; Hợp đồng</a>
-                <a href="/payments" class="active">▣ &nbsp; Thanh toán</a>
-                <a href="/reviews">☆ &nbsp; Đánh giá của tôi</a>
-                <a href="/support">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
-                <a href="/notifications">♧ &nbsp; Thông báo</a>
-                <a href="/account-info">♙ &nbsp; Thông tin cá nhân</a>
+                <a href="/user/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
+                <a href="/user/profile">🚘 &nbsp; Đơn thuê của tôi</a>
+                <a href="/user/contracts">▤ &nbsp; Hợp đồng</a>
+                <a href="/user/payments" class="active">▣ &nbsp; Thanh toán</a>
+                <a href="/user/reviews">☆ &nbsp; Đánh giá của tôi</a>
+                <a href="/user/support">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
+                <a href="/user/notifications">♧ &nbsp; Thông báo</a>
+                <a href="/user/account-info">♙ &nbsp; Thông tin cá nhân</a>
             </nav>
 
             <a href="/login" class="sidebar-logout">
@@ -130,38 +130,38 @@
 
 @code {
     private readonly List<PaymentItem> PaymentList = new()
-    {
-        new()
-        {
-            Id = "#PAY-25051594",
-            BookingId = "#RT250515-0094",
-            Method = "Visa •••• 4582",
-            Date = "14/05/2025",
-            Amount = 11250000,
-            Status = "Đã thanh toán",
-            StatusClass = "paid"
-        },
-        new()
-        {
-            Id = "#REF-25051826",
-            BookingId = "#RT250515-0094",
-            Method = "Visa •••• 4582",
-            Date = "20/05/2025",
-            Amount = 15000000,
-            Status = "Đã hoàn tiền",
-            StatusClass = "refunded"
-        },
-        new()
-        {
-            Id = "#PAY-25040241",
-            BookingId = "#RT250402-0041",
-            Method = "MoMo",
-            Date = "01/04/2025",
-            Amount = 7200000,
-            Status = "Đã thanh toán",
-            StatusClass = "paid"
-        }
-    };
+{
+new()
+{
+Id = "#PAY-25051594",
+BookingId = "#RT250515-0094",
+Method = "Visa •••• 4582",
+Date = "14/05/2025",
+Amount = 11250000,
+Status = "Đã thanh toán",
+StatusClass = "paid"
+},
+new()
+{
+Id = "#REF-25051826",
+BookingId = "#RT250515-0094",
+Method = "Visa •••• 4582",
+Date = "20/05/2025",
+Amount = 15000000,
+Status = "Đã hoàn tiền",
+StatusClass = "refunded"
+},
+new()
+{
+Id = "#PAY-25040241",
+BookingId = "#RT250402-0041",
+Method = "MoMo",
+Date = "01/04/2025",
+Amount = 7200000,
+Status = "Đã thanh toán",
+StatusClass = "paid"
+}
+};
 
     private class PaymentItem
     {
@@ -172,5 +172,10 @@
         public decimal Amount { get; set; }
         public string Status { get; set; } = "";
         public string StatusClass { get; set; } = "";
+    }
+
+    private void Logout()
+    {
+        Navigation.NavigateTo("/login");
     }
 }

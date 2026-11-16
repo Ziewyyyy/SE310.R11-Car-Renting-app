@@ -1,0 +1,552 @@
+
+@page "/admin/notifications"
+@layout AdminLayout
+
+<PageTitle>Thông báo | RENTO</PageTitle>
+
+<div class="notification-page">
+
+    <!-- HEADER -->
+    <div class="notification-heading">
+        <div>
+            <div class="notification-eyebrow">
+                TRUNG TÂM THÔNG BÁO
+            </div>
+
+            <h1>Thông báo</h1>
+
+            <p>Cập nhật hoạt động vận hành và cảnh báo quan trọng.</p>
+        </div>
+
+        <button class="notification-create-btn"
+                @onclick="OpenCreateModal">
+            <span>＋</span>
+            Soạn thông báo mới
+        </button>
+    </div>
+
+    <!-- NOTIFICATION PANEL -->
+    <div class="notification-panel">
+
+        <!-- TOOLBAR -->
+        <div class="notification-toolbar">
+
+            <div class="notification-tabs">
+
+                <button class="notification-tab @(activeTab == "all" ? "active" : "")"
+                        @onclick='() => ChangeTab("all")'>
+                    Tất cả
+                </button>
+
+                <button class="notification-tab @(activeTab == "unread" ? "active" : "")"
+                        @onclick='() => ChangeTab("unread")'>
+                    Chưa đọc
+
+                    <span class="notification-tab-count">
+                        @UnreadCount
+                    </span>
+                </button>
+
+                <button class="notification-tab @(activeTab == "warning" ? "active" : "")"
+                        @onclick='() => ChangeTab("warning")'>
+                    Cảnh báo hệ thống
+                </button>
+
+            </div>
+
+            <div class="notification-toolbar-actions">
+
+                <div class="notification-type-filter">
+                    <label>Loại</label>
+
+                    <select @bind="selectedType">
+                        <option value="all">Tất cả loại</option>
+                        <option value="booking">Đơn thuê xe</option>
+                        <option value="payment">Thanh toán</option>
+                        <option value="warning">Cảnh báo</option>
+                        <option value="maintenance">Bảo dưỡng</option>
+                        <option value="support">Hỗ trợ</option>
+                    </select>
+                </div>
+
+                <button class="notification-read-all"
+                        @onclick="MarkAllAsRead"
+                        disabled="@(UnreadCount == 0)">
+                    <span>✓</span>
+                    Đánh dấu tất cả đã đọc
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- LIST -->
+        <div class="notification-list">
+
+            @foreach (var item in FilteredNotifications)
+            {
+                <div class="notification-item @(item.IsRead ? "is-read" : "is-unread")"
+                     @key="item.Id">
+
+                    <!-- ICON -->
+                    <div class="notification-icon @GetIconClass(item.Type)">
+                        @GetIcon(item.Type)
+                    </div>
+
+                    <!-- CONTENT -->
+                    <div class="notification-content">
+
+                        <div class="notification-title-row">
+                            <strong>@item.Title</strong>
+                        </div>
+
+                        <div class="notification-description">
+                            @item.Description
+                        </div>
+
+                        <div class="notification-time">
+                            @item.TimeText
+                        </div>
+
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="notification-item-actions">
+
+                        @if (!item.IsRead)
+                        {
+                            <button class="notification-mark-read"
+                                    @onclick="() => MarkAsRead(item)"
+                                    title="Đánh dấu đã đọc">
+                                Đánh dấu đã đọc
+                            </button>
+                        }
+
+                        <div class="notification-menu-wrapper">
+
+                            <button class="notification-more-btn"
+                                    @onclick="() => ToggleMenu(item.Id)"
+                                    title="Thao tác">
+                                ⋯
+                            </button>
+
+                            @if (activeMenuId == item.Id)
+                            {
+                                <div class="notification-dropdown">
+
+                                    @if (!item.IsRead)
+                                    {
+                                        <button @onclick="() => MarkAsRead(item)">
+                                            <span>✓</span>
+                                            Đánh dấu đã đọc
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button @onclick="() => MarkAsUnread(item)">
+                                            <span>↶</span>
+                                            Đánh dấu chưa đọc
+                                        </button>
+                                    }
+
+                                    <button class="delete-option"
+                                            @onclick="() => DeleteNotification(item)">
+                                        <span>⌫</span>
+                                        Xóa thông báo
+                                    </button>
+
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+            @if (!FilteredNotifications.Any())
+            {
+                <div class="notification-empty">
+                    <span>♧</span>
+                    <strong>Không có thông báo nào</strong>
+                    <small>
+                        Hiện tại không có thông báo phù hợp với bộ lọc.
+                    </small>
+                </div>
+            }
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="notification-footer">
+            Hiển thị @FilteredNotifications.Count() thông báo
+            <span>·</span>
+            @UnreadCount thông báo chưa đọc
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- CREATE NOTIFICATION MODAL -->
+@if (showCreateModal)
+{
+    <div class="notification-modal-overlay"
+         @onclick="CloseCreateModal">
+
+        <div class="notification-modal"
+             @onclick:stopPropagation="true">
+
+            <div class="notification-modal-header">
+
+                <div>
+                    <h2>Soạn thông báo mới</h2>
+                    <p>Tạo thông báo gửi đến hệ thống RENTO.</p>
+                </div>
+
+                <button class="notification-modal-close"
+                        @onclick="CloseCreateModal">
+                    ×
+                </button>
+
+            </div>
+
+            <div class="notification-modal-body">
+
+                <div class="notification-form-group">
+                    <label>Tiêu đề thông báo</label>
+
+                    <input type="text"
+                           @bind="newTitle"
+                           placeholder="Nhập tiêu đề thông báo..." />
+                </div>
+
+                <div class="notification-form-group">
+                    <label>Loại thông báo</label>
+
+                    <select @bind="newType">
+                        <option value="booking">Đơn thuê xe</option>
+                        <option value="payment">Thanh toán</option>
+                        <option value="warning">Cảnh báo hệ thống</option>
+                        <option value="maintenance">Bảo dưỡng</option>
+                        <option value="support">Hỗ trợ</option>
+                    </select>
+                </div>
+
+                <div class="notification-form-group">
+                    <label>Nội dung thông báo</label>
+
+                    <textarea rows="5"
+                              @bind="newDescription"
+                              placeholder="Nhập nội dung thông báo...">
+                    </textarea>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(formError))
+                {
+                    <div class="notification-form-error">
+                        @formError
+                    </div>
+                }
+
+            </div>
+
+            <div class="notification-modal-footer">
+
+                <button class="notification-cancel-btn"
+                        @onclick="CloseCreateModal">
+                    Hủy
+                </button>
+
+                <button class="notification-submit-btn"
+                        @onclick="CreateNotification">
+                    Gửi thông báo →
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+
+@code {
+
+    // =====================================
+    // STATE
+    // =====================================
+
+    private string activeTab = "all";
+
+    private string selectedType = "all";
+
+    private int? activeMenuId = null;
+
+    private bool showCreateModal = false;
+
+    private string newTitle = "";
+
+    private string newDescription = "";
+
+    private string newType = "booking";
+
+    private string formError = "";
+
+    private int nextId = 6;
+
+
+    // =====================================
+    // SAMPLE DATA
+    // =====================================
+
+    private List<NotificationItem> notifications = new()
+    {
+        new()
+        {
+            Id = 1,
+            Title = "Đơn thuê mới đang chờ xác nhận",
+            Description = "RE-240728 · Nguyễn Minh Anh · Mercedes-Benz C200",
+            TimeText = "8 phút trước",
+            Type = "booking",
+            IsRead = false
+        },
+
+        new()
+        {
+            Id = 2,
+            Title = "Thanh toán đã được ghi nhận",
+            Description = "Đã nhận 3.000.000 ₫ cho giao dịch GD-87292",
+            TimeText = "24 phút trước",
+            Type = "payment",
+            IsRead = false
+        },
+
+        new()
+        {
+            Id = 3,
+            Title = "Cảnh báo thiết bị khóa xe",
+            Description = "Thiết bị trên xe 51K-883.26 mất kết nối hơn 10 phút",
+            TimeText = "42 phút trước",
+            Type = "warning",
+            IsRead = false
+        },
+
+        new()
+        {
+            Id = 4,
+            Title = "Xe sắp đến hạn bảo dưỡng",
+            Description = "Mazda CX-5 · 29B-682.17 · Còn 320 km",
+            TimeText = "1 giờ trước",
+            Type = "maintenance",
+            IsRead = true
+        },
+
+        new()
+        {
+            Id = 5,
+            Title = "Yêu cầu hỗ trợ được cập nhật",
+            Description = "TK-0927 đã được gán cho NV-0024",
+            TimeText = "2 giờ trước",
+            Type = "support",
+            IsRead = true
+        }
+    };
+
+
+    // =====================================
+    // COMPUTED DATA
+    // =====================================
+
+    private int UnreadCount =>
+        notifications.Count(x => !x.IsRead);
+
+    private IEnumerable<NotificationItem> FilteredNotifications
+    {
+        get
+        {
+            var query = notifications.AsEnumerable();
+
+            if (activeTab == "unread")
+            {
+                query = query.Where(x => !x.IsRead);
+            }
+            else if (activeTab == "warning")
+            {
+                query = query.Where(x => x.Type == "warning");
+            }
+
+            if (selectedType != "all")
+            {
+                query = query.Where(x => x.Type == selectedType);
+            }
+
+            return query.OrderBy(x => x.IsRead)
+                        .ThenBy(x => x.Id);
+        }
+    }
+
+
+    // =====================================
+    // TAB
+    // =====================================
+
+    private void ChangeTab(string tab)
+    {
+        activeTab = tab;
+        activeMenuId = null;
+    }
+
+
+    // =====================================
+    // READ NOTIFICATION
+    // =====================================
+
+    private void MarkAsRead(NotificationItem item)
+    {
+        item.IsRead = true;
+        activeMenuId = null;
+    }
+
+    private void MarkAsUnread(NotificationItem item)
+    {
+        item.IsRead = false;
+        activeMenuId = null;
+    }
+
+    private void MarkAllAsRead()
+    {
+        foreach (var item in notifications)
+        {
+            item.IsRead = true;
+        }
+
+        activeMenuId = null;
+    }
+
+
+    // =====================================
+    // MENU
+    // =====================================
+
+    private void ToggleMenu(int id)
+    {
+        activeMenuId = activeMenuId == id ? null : id;
+    }
+
+
+    // =====================================
+    // DELETE
+    // =====================================
+
+    private void DeleteNotification(NotificationItem item)
+    {
+        notifications.Remove(item);
+        activeMenuId = null;
+    }
+
+
+    // =====================================
+    // CREATE MODAL
+    // =====================================
+
+    private void OpenCreateModal()
+    {
+        newTitle = "";
+        newDescription = "";
+        newType = "booking";
+        formError = "";
+        showCreateModal = true;
+    }
+
+    private void CloseCreateModal()
+    {
+        showCreateModal = false;
+        formError = "";
+    }
+
+    private void CreateNotification()
+    {
+        if (string.IsNullOrWhiteSpace(newTitle))
+        {
+            formError = "Vui lòng nhập tiêu đề thông báo.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newDescription))
+        {
+            formError = "Vui lòng nhập nội dung thông báo.";
+            return;
+        }
+
+        notifications.Insert(0, new NotificationItem
+        {
+            Id = nextId++,
+            Title = newTitle.Trim(),
+            Description = newDescription.Trim(),
+            TimeText = "Vừa xong",
+            Type = newType,
+            IsRead = false
+        });
+
+        // Quay về tab tất cả và loại tất cả
+        activeTab = "all";
+        selectedType = "all";
+
+        CloseCreateModal();
+    }
+
+
+    // =====================================
+    // ICON
+    // =====================================
+
+    private static string GetIcon(string type)
+    {
+        return type switch
+        {
+            "booking" => "▣",
+            "payment" => "▤",
+            "warning" => "⚠",
+            "maintenance" => "▣",
+            "support" => "♧",
+            _ => "●"
+        };
+    }
+
+    private static string GetIconClass(string type)
+    {
+        return type switch
+        {
+            "booking" => "icon-booking",
+            "payment" => "icon-payment",
+            "warning" => "icon-warning",
+            "maintenance" => "icon-maintenance",
+            "support" => "icon-support",
+            _ => ""
+        };
+    }
+
+
+    // =====================================
+    // MODEL
+    // =====================================
+
+    private class NotificationItem
+    {
+        public int Id { get; set; }
+
+        public string Title { get; set; } = "";
+
+        public string Description { get; set; } = "";
+
+        public string TimeText { get; set; } = "";
+
+        public string Type { get; set; } = "";
+
+        public bool IsRead { get; set; }
+    }
+
+}

@@ -1,0 +1,249 @@
+@page "/admin/customers"
+@layout AdminLayout
+
+<PageTitle>Hồ sơ khách hàng | RENTO</PageTitle>
+
+<div class="customer-page">
+    <div class="customer-heading">
+        <div>
+            <div class="customer-eyebrow">CƠ SỞ DỮ LIỆU KHÁCH HÀNG</div>
+            <h1>Hồ sơ khách hàng</h1>
+            <p>Quản lý thông tin, lịch sử thuê xe và trạng thái tài khoản.</p>
+        </div>
+
+        <div class="customer-total">
+            <strong>8.426</strong>
+            <span>khách hàng</span>
+        </div>
+    </div>
+
+    <section class="customer-panel">
+        <div class="customer-toolbar">
+            <div class="customer-search">
+                <span class="search-icon">⌕</span>
+                <input placeholder="Tên, số điện thoại, email..."
+                       @bind="searchText"
+                       @bind:event="oninput"
+                       @bind:after="ResetPage" />
+                @if (!string.IsNullOrWhiteSpace(searchText))
+                {
+                    <button type="button" class="clear-search" title="Xóa tìm kiếm"
+                            @onclick="ClearSearch">×</button>
+                }
+            </div>
+
+            <div class="customer-date-filter">
+                <span>▦</span>
+                <input aria-label="Từ ngày" type="date"
+                       @bind="fromDate"
+                       @bind:after="ResetPage" />
+                <span class="date-separator">đến</span>
+                <input aria-label="Đến ngày" type="date"
+                       @bind="toDate"
+                       @bind:after="ResetPage" />
+            </div>
+
+            <div class="customer-status-filter">
+                <span>Tài khoản</span>
+                <select @bind="selectedStatus" @bind:after="ResetPage">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Hoạt động">Hoạt động</option>
+                    <option value="Bị khóa">Bị khóa</option>
+                </select>
+            </div>
+
+            <span class="customer-result-count">@filteredCustomers.Count() kết quả</span>
+        </div>
+
+        <div class="customer-table-wrap">
+            <table class="customer-table">
+                <thead>
+                    <tr>
+                        <th>KHÁCH HÀNG</th>
+                        <th>LIÊN HỆ</th>
+                        <th>TỔNG ĐƠN</th>
+                        <th>GIÁ TRỊ THUÊ</th>
+                        <th>ĐƠN GẦN NHẤT</th>
+                        <th>TRẠNG THÁI</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (pagedCustomers.Any())
+                    {
+                        @foreach (var customer in pagedCustomers)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="customer-identity">
+                                        <span class="customer-avatar">@GetInitials(customer.Name)</span>
+                                        <strong>@customer.Name</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="customer-contact">
+                                        <strong>@customer.Phone</strong>
+                                        <small>@customer.Email</small>
+                                    </div>
+                                </td>
+                                <td class="center-cell">@customer.OrderCount đơn</td>
+                                <td class="money-cell">@customer.TotalSpent.ToString("N0") đ</td>
+                                <td>@customer.LastOrderDate.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <span class="customer-status @(customer.Status == "Hoạt động" ? "is-active" : "is-locked")">
+                                        <i></i>@customer.Status
+                                    </span>
+                                </td>
+                                <td class="action-cell">
+                                    <button type="button" class="view-customer"
+                                            @onclick="() => OpenCustomer(customer)">
+                                        Xem hồ sơ <span>›</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="customer-empty">
+                                Không tìm thấy khách hàng phù hợp.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="customer-table-footer">
+            <span>
+                @if (filteredCustomers.Any())
+                {
+                    <text>Hiển thị @firstItem–@lastItem trong 8.426 khách hàng</text>
+                }
+                else
+                {
+                    <text>Không có dữ liệu để hiển thị</text>
+                }
+            </span>
+
+            <div class="customer-pagination">
+                <button type="button" aria-label="Trang trước"
+                        disabled="@(currentPage == 1)" @onclick="PreviousPage">‹</button>
+                @for (var page = 1; page <= totalPages; page++)
+                {
+                    var pageNumber = page;
+                    <button type="button" class="@(currentPage == pageNumber ? "active" : "")"
+                            @onclick="() => GoToPage(pageNumber)">@pageNumber</button>
+                }
+                <button type="button" aria-label="Trang sau"
+                        disabled="@(currentPage >= totalPages)" @onclick="NextPage">›</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+@if (selectedCustomer is not null)
+{
+    <div class="customer-modal-backdrop" @onclick="CloseCustomer">
+        <section class="customer-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="customer-modal-title" @onclick:stopPropagation="true">
+            <div class="customer-modal-header">
+                <div>
+                    <span class="customer-eyebrow">THÔNG TIN KHÁCH HÀNG</span>
+                    <h2 id="customer-modal-title">Hồ sơ khách hàng</h2>
+                </div>
+                <button type="button" class="modal-close" aria-label="Đóng"
+                        @onclick="CloseCustomer">×</button>
+            </div>
+
+            <div class="customer-profile">
+                <span class="customer-avatar large">@GetInitials(selectedCustomer.Name)</span>
+                <div>
+                    <strong>@selectedCustomer.Name</strong>
+                    <span class="customer-status @(selectedCustomer.Status == "Hoạt động" ? "is-active" : "is-locked")">
+                        <i></i>@selectedCustomer.Status
+                    </span>
+                </div>
+            </div>
+
+            <div class="customer-detail-grid">
+                <div><span>Số điện thoại</span><strong>@selectedCustomer.Phone</strong></div>
+                <div><span>Email</span><strong>@selectedCustomer.Email</strong></div>
+                <div><span>Tổng đơn thuê</span><strong>@selectedCustomer.OrderCount đơn</strong></div>
+                <div><span>Tổng giá trị thuê</span><strong>@selectedCustomer.TotalSpent.ToString("N0") đ</strong></div>
+                <div><span>Đơn gần nhất</span><strong>@selectedCustomer.LastOrderDate.ToString("dd/MM/yyyy")</strong></div>
+            </div>
+
+            <div class="customer-modal-actions">
+                <button type="button" class="modal-secondary" @onclick="CloseCustomer">Đóng</button>
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    private const int PageSize = 4;
+
+    private string searchText = "";
+    private string selectedStatus = "";
+    private DateTime? fromDate;
+    private DateTime? toDate;
+    private int currentPage = 1;
+    private CustomerRecord? selectedCustomer;
+
+    // Dữ liệu minh họa. Thay danh sách này bằng dữ liệu lấy từ API/database.
+    private readonly List<CustomerRecord> customers = new()
+    {
+        new() { Name = "Nguyễn Minh Anh", Phone = "090 482 7712", Email = "minhanh.nguyen@email.com", OrderCount = 12, TotalSpent = 86400000, LastOrderDate = new(2025, 7, 28), Status = "Hoạt động" },
+        new() { Name = "Trần Hoàng Nam", Phone = "093 218 9046", Email = "hoangnam.tran@gmail.com", OrderCount = 8, TotalSpent = 42850000, LastOrderDate = new(2025, 7, 27), Status = "Hoạt động" },
+        new() { Name = "Lê Thanh Huyền", Phone = "098 662 1840", Email = "huyen.le@email.com", OrderCount = 5, TotalSpent = 28200000, LastOrderDate = new(2025, 7, 25), Status = "Hoạt động" },
+        new() { Name = "Phạm Đức Long", Phone = "091 726 3381", Email = "duclong.pham@gmail.com", OrderCount = 3, TotalSpent = 15600000, LastOrderDate = new(2025, 7, 24), Status = "Bị khóa" },
+        new() { Name = "Đỗ Khánh Linh", Phone = "097 310 5528", Email = "khanhlinh.do@email.com", OrderCount = 6, TotalSpent = 31900000, LastOrderDate = new(2025, 7, 22), Status = "Hoạt động" },
+        new() { Name = "Ngô Quang Huy", Phone = "090 551 2266", Email = "quanghuy.ngo@gmail.com", OrderCount = 4, TotalSpent = 22400000, LastOrderDate = new(2025, 7, 20), Status = "Hoạt động" },
+        new() { Name = "Vũ Thu Trang", Phone = "096 445 8812", Email = "thutrang.vu@email.com", OrderCount = 2, TotalSpent = 9800000, LastOrderDate = new(2025, 7, 18), Status = "Bị khóa" },
+        new() { Name = "Bùi Anh Tuấn", Phone = "092 778 1104", Email = "anhtuan.bui@gmail.com", OrderCount = 9, TotalSpent = 57300000, LastOrderDate = new(2025, 7, 16), Status = "Hoạt động" },
+        new() { Name = "Phan Ngọc Mai", Phone = "094 221 0098", Email = "ngocmai.phan@email.com", OrderCount = 7, TotalSpent = 39100000, LastOrderDate = new(2025, 7, 14), Status = "Hoạt động" },
+        new() { Name = "Đặng Quốc Bảo", Phone = "091 889 3302", Email = "quocbao.dang@gmail.com", OrderCount = 1, TotalSpent = 6200000, LastOrderDate = new(2025, 7, 12), Status = "Bị khóa" },
+        new() { Name = "Mai Hải Yến", Phone = "098 102 4488", Email = "haiyen.mai@email.com", OrderCount = 11, TotalSpent = 71200000, LastOrderDate = new(2025, 7, 10), Status = "Hoạt động" },
+        new() { Name = "Hồ Thành Đạt", Phone = "090 667 2910", Email = "thanhdat.ho@gmail.com", OrderCount = 3, TotalSpent = 18400000, LastOrderDate = new(2025, 7, 8), Status = "Hoạt động" }
+    };
+
+    private IEnumerable<CustomerRecord> filteredCustomers => customers.Where(customer =>
+        (string.IsNullOrWhiteSpace(searchText) ||
+         customer.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+         customer.Phone.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+         customer.Email.Contains(searchText, StringComparison.OrdinalIgnoreCase)) &&
+        (string.IsNullOrWhiteSpace(selectedStatus) || customer.Status == selectedStatus) &&
+        (!fromDate.HasValue || customer.LastOrderDate.Date >= fromDate.Value.Date) &&
+        (!toDate.HasValue || customer.LastOrderDate.Date <= toDate.Value.Date));
+
+    private int totalPages => Math.Max(1, (int)Math.Ceiling(filteredCustomers.Count() / (double)PageSize));
+    private IEnumerable<CustomerRecord> pagedCustomers => filteredCustomers
+        .Skip((currentPage - 1) * PageSize).Take(PageSize);
+    private int firstItem => filteredCustomers.Any() ? (currentPage - 1) * PageSize + 1 : 0;
+    private int lastItem => Math.Min(currentPage * PageSize, filteredCustomers.Count());
+
+    private static string GetInitials(string name) =>
+        string.Join("", name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .TakeLast(2).Select(part => char.ToUpperInvariant(part[0])));
+
+    private void ResetPage() => currentPage = 1;
+    private void ClearSearch() { searchText = ""; ResetPage(); }
+    private void GoToPage(int page) => currentPage = Math.Clamp(page, 1, totalPages);
+    private void PreviousPage() => GoToPage(currentPage - 1);
+    private void NextPage() => GoToPage(currentPage + 1);
+    private void OpenCustomer(CustomerRecord customer) => selectedCustomer = customer;
+    private void CloseCustomer() => selectedCustomer = null;
+
+    private sealed class CustomerRecord
+    {
+        public string Name { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string Email { get; set; } = "";
+        public int OrderCount { get; set; }
+        public decimal TotalSpent { get; set; }
+        public DateTime LastOrderDate { get; set; }
+        public string Status { get; set; } = "";
+    }
+}

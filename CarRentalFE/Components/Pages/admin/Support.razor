@@ -1,0 +1,623 @@
+
+@page "/admin/support"
+@layout AdminLayout
+
+<PageTitle>Hỗ trợ | RENTO</PageTitle>
+
+<div class="support-page">
+
+    <!-- PAGE HEADER -->
+    <div class="support-heading">
+        <div>
+            <h1>Trung tâm hỗ trợ</h1>
+            <p>Tiếp nhận và xử lý yêu cầu của khách hàng theo thời gian thực.</p>
+        </div>
+
+        <div class="support-summary">
+            <span class="summary-high">● 3 ưu tiên cao</span>
+            <span class="summary-pending">● 8 đang chờ</span>
+        </div>
+    </div>
+
+    <!-- SUPPORT WORKSPACE -->
+    <div class="support-workspace">
+
+        <!-- LEFT: TICKET LIST -->
+        <aside class="support-sidebar">
+
+            <div class="support-search">
+                <span>⌕</span>
+                <input placeholder="Tìm mã, tiêu đề, khách hàng..."
+                       @bind="searchText"
+                       @bind:event="oninput" />
+
+                <button type="button" title="Lọc" @onclick="ToggleFilter">
+                    <span>▽</span>
+                </button>
+            </div>
+
+            @if (showFilter)
+            {
+                <div class="support-filter">
+                    <label>Trạng thái yêu cầu</label>
+                    <select @bind="statusFilter">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Đang xử lý">Đang xử lý</option>
+                        <option value="Chờ phản hồi">Chờ phản hồi</option>
+                        <option value="Đã giải quyết">Đã giải quyết</option>
+                    </select>
+
+                    <label>Mức độ ưu tiên</label>
+                    <select @bind="priorityFilter">
+                        <option value="">Tất cả mức độ</option>
+                        <option value="Cao">Cao</option>
+                        <option value="Trung bình">Trung bình</option>
+                        <option value="Thấp">Thấp</option>
+                    </select>
+                </div>
+            }
+
+            <div class="support-list-heading">
+                <strong>@filteredTickets.Count() yêu cầu</strong>
+
+                <select @bind="sortOrder">
+                    <option value="newest">Mới nhất</option>
+                    <option value="oldest">Cũ nhất</option>
+                </select>
+            </div>
+
+            <div class="support-ticket-list">
+
+                @foreach (var ticket in filteredTickets)
+                {
+                    <button type="button"
+                            class="support-ticket @(selectedTicket?.Id == ticket.Id ? "selected" : "")"
+                            @onclick="() => SelectTicket(ticket)">
+
+                        <div class="ticket-topline">
+                            <strong>@ticket.Code</strong>
+                            <small>@ticket.TimeAgo</small>
+                        </div>
+
+                        <h3>@ticket.Title</h3>
+
+                        <div class="ticket-customer">
+                            <span class="ticket-avatar">@GetInitials(ticket.Customer)</span>
+                            <span>@ticket.Customer</span>
+
+                            <span class="priority-tag @GetPriorityClass(ticket.Priority)">
+                                @ticket.Priority
+                            </span>
+                        </div>
+
+                        <div class="ticket-bottomline">
+                            <span class="ticket-status @GetStatusClass(ticket.Status)">
+                                <i></i>@ticket.Status
+                            </span>
+
+                            <small>@ticket.AssigneeCode</small>
+                        </div>
+
+                    </button>
+                }
+
+                @if (!filteredTickets.Any())
+                {
+                    <div class="support-no-ticket">
+                        Không tìm thấy yêu cầu hỗ trợ.
+                    </div>
+                }
+
+            </div>
+        </aside>
+
+        <!-- CENTER: CONVERSATION -->
+        @if (selectedTicket is not null)
+        {
+            <main class="support-conversation">
+
+                <!-- CONVERSATION HEADER -->
+                <div class="conversation-header">
+
+                    <div class="conversation-title">
+                        <span class="conversation-code">
+                            @selectedTicket.Code · @selectedTicket.Category.ToUpper()
+                        </span>
+
+                        <h2>@selectedTicket.Title</h2>
+
+                        <small>
+                            Được tạo lúc @selectedTicket.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </small>
+                    </div>
+
+                    <div class="conversation-actions">
+
+                        <div class="conversation-select">
+                            <label>Gán cho</label>
+                            <select @bind="selectedTicket.AssigneeCode">
+                                <option value="NV-0024">NV-0024 · Hoàng Minh</option>
+                                <option value="NV-0025">NV-0025 · Lan Anh</option>
+                                <option value="NV-0026">NV-0026 · Quốc Huy</option>
+                            </select>
+                        </div>
+
+                        <div class="conversation-select status-select">
+                            <label>Trạng thái</label>
+                            <select @bind="selectedTicket.Status">
+                                <option value="Đang xử lý">Đang xử lý</option>
+                                <option value="Chờ phản hồi">Chờ phản hồi</option>
+                                <option value="Đã giải quyết">Đã giải quyết</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- MESSAGE HISTORY -->
+                <div class="conversation-body">
+
+                    <div class="conversation-date">
+                        <span></span>
+                        <small>Hôm nay, @DateTime.Now.ToString("dd/MM/yyyy")</small>
+                        <span></span>
+                    </div>
+
+                    @foreach (var message in selectedTicket.Messages)
+                    {
+                        @if (message.IsSystem)
+                        {
+                            <div class="system-message">
+                                <span>♧</span>
+                                <div>
+                                    <strong>@message.Content</strong>
+                                    <small>@message.Time.ToString("HH:mm")</small>
+                                </div>
+                            </div>
+                        }
+                        else if (message.IsInternal)
+                        {
+                            <div class="internal-message">
+                                <div class="message-meta">
+                                    <strong>Ghi chú nội bộ</strong>
+                                    <small>@message.Time.ToString("HH:mm")</small>
+                                </div>
+                                <p>@message.Content</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="message-row @(message.IsStaff ? "staff-message" : "customer-message")">
+
+                                <span class="message-avatar">
+                                    @GetInitials(message.Sender)
+                                </span>
+
+                                <div class="message-content">
+
+                                    <div class="message-meta">
+                                        <strong>@message.Sender</strong>
+                                        <small>@message.Time.ToString("HH:mm")</small>
+                                    </div>
+
+                                    <div class="message-bubble">
+                                        @message.Content
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(message.Attachment))
+                                    {
+                                        <div class="message-attachment">
+                                            <span>▤</span>
+                                            <div>
+                                                <strong>@message.Attachment</strong>
+                                                <small>1.2 MB · Tệp đính kèm</small>
+                                            </div>
+                                        </div>
+                                    }
+
+                                </div>
+                            </div>
+                        }
+                    }
+
+                </div>
+
+                <!-- REPLY AREA -->
+                <div class="support-reply">
+
+                    <div class="reply-tabs">
+                        <button type="button"
+                                class="reply-tab @(replyMode == "reply" ? "active" : "")"
+                                @onclick='() => ChangeReplyMode("reply")'>
+                            Phản hồi khách hàng
+                        </button>
+
+                        <button type="button"
+                                class="reply-tab @(replyMode == "internal" ? "active" : "")"
+                                @onclick='() => ChangeReplyMode("internal")'>
+                            Ghi chú nội bộ
+                        </button>
+                    </div>
+
+                    <textarea @bind="replyContent"
+                              rows="3"
+                              placeholder="@(replyMode == "reply"
+                                  ? "Nhập nội dung phản hồi..."
+                                  : "Nhập ghi chú nội bộ...")"></textarea>
+
+                    @if (!string.IsNullOrWhiteSpace(replyError))
+                    {
+                        <div class="reply-error">@replyError</div>
+                    }
+
+                    <div class="reply-footer">
+
+                        <div class="reply-attachment">
+                            <label class="attachment-button">
+                                <span>＋</span>
+                                Đính kèm tệp
+                                <InputFile accept="image/*,.pdf,.doc,.docx"
+                                           OnChange="HandleAttachment" />
+                            </label>
+
+                            @if (!string.IsNullOrWhiteSpace(attachmentName))
+                            {
+                                <span class="attachment-name">@attachmentName</span>
+                            }
+                        </div>
+
+                        <button type="button"
+                                class="send-reply-button"
+                                @onclick="SendReply">
+                            Gửi phản hồi →
+                        </button>
+
+                    </div>
+                </div>
+
+            </main>
+
+            <!-- RIGHT: CUSTOMER INFORMATION -->
+            <aside class="support-customer-info">
+
+                <div class="customer-profile-header">
+                    <span class="profile-avatar">
+                        @GetInitials(selectedTicket.Customer)
+                    </span>
+
+                    <strong>@selectedTicket.Customer</strong>
+                    <small>KH-01842 · Thành viên bạc</small>
+                </div>
+
+                <div class="customer-info-section">
+                    <h4>Thông tin liên hệ</h4>
+                    <span>@selectedTicket.Phone</span>
+                    <span>@selectedTicket.Email</span>
+                </div>
+
+                <div class="customer-info-section">
+                    <h4>Đơn thuê liên quan</h4>
+                    <a href="/admin/orders">@selectedTicket.OrderCode ›</a>
+                    <span>@selectedTicket.Car</span>
+                    <span>@selectedTicket.RentalDate</span>
+                </div>
+
+                <div class="customer-statistics">
+                    <div>
+                        <strong>@selectedTicket.TotalOrders</strong>
+                        <small>Đơn thuê</small>
+                    </div>
+
+                    <div>
+                        <strong>@selectedTicket.PreviousTickets</strong>
+                        <small>Yêu cầu hỗ trợ</small>
+                    </div>
+                </div>
+
+            </aside>
+        }
+
+    </div>
+</div>
+
+@code {
+    private string searchText = "";
+    private string statusFilter = "";
+    private string priorityFilter = "";
+    private string sortOrder = "newest";
+
+    private bool showFilter = false;
+    private string replyMode = "reply";
+    private string replyContent = "";
+    private string replyError = "";
+    private string attachmentName = "";
+
+    private SupportTicket? selectedTicket;
+
+    private List<SupportTicket> tickets = new()
+    {
+        new()
+        {
+            Id = 1,
+            Code = "TK-0927",
+            Title = "Không thể mở khóa xe khi nhận",
+            Category = "Thuê xe",
+            Customer = "Nguyễn Minh Anh",
+            Phone = "090 482 7712",
+            Email = "minhanh.nguyen@email.com",
+            Priority = "Cao",
+            Status = "Đang xử lý",
+            AssigneeCode = "NV-0024",
+            TimeAgo = "8 phút trước",
+            CreatedAt = new(2025, 7, 28, 9, 20, 0),
+            OrderCode = "RE-240728",
+            Car = "Mercedes-Benz C200",
+            RentalDate = "28/07 – 02/08/2025",
+            TotalOrders = 12,
+            PreviousTickets = 1,
+            Messages = new()
+            {
+                new()
+                {
+                    Sender = "Nguyễn Minh Anh",
+                    Content = "Chào RENTO, tôi đã đến điểm nhận xe nhưng ứng dụng báo không thể mở khóa. Tôi đã kiểm tra Bluetooth và kết nối mạng nhưng vẫn chưa được. Nhờ đội ngũ hỗ trợ giúp tôi sớm.",
+                    Time = new(2025, 7, 28, 9, 42, 0)
+                },
+                new()
+                {
+                    Sender = "Nguyễn Minh Anh",
+                    Content = "",
+                    Attachment = "anh-loi-khoa-xe.jpg",
+                    Time = new(2025, 7, 28, 9, 43, 0)
+                },
+                new()
+                {
+                    Sender = "Hoàng Minh · RENTO",
+                    Content = "Chào chị Minh Anh, em đã ghi nhận vấn đề. Chị vui lòng giữ ứng dụng mở, bên em đang gửi lại mã xác thực đến xe.",
+                    IsStaff = true,
+                    Time = new(2025, 7, 28, 9, 48, 0)
+                },
+                new()
+                {
+                    Sender = "Hệ thống",
+                    Content = "Đã gửi yêu cầu hỗ trợ đến NV-0024. Thiết bị khóa xe đang đồng bộ lại, dự kiến 5 phút.",
+                    IsSystem = true,
+                    Time = new(2025, 7, 28, 9, 50, 0)
+                }
+            }
+        },
+
+        new()
+        {
+            Id = 2,
+            Code = "TK-0926",
+            Title = "Yêu cầu điều chỉnh thời gian trả",
+            Category = "Đơn thuê",
+            Customer = "Trần Hoàng Nam",
+            Phone = "093 218 9046",
+            Email = "hoangnam.tran@gmail.com",
+            Priority = "Trung bình",
+            Status = "Chờ phản hồi",
+            AssigneeCode = "NV-0024",
+            TimeAgo = "24 phút trước",
+            CreatedAt = new(2025, 7, 28, 9, 4, 0),
+            OrderCode = "RE-240727",
+            Car = "VinFast VF 8 Plus",
+            RentalDate = "27/07 – 30/07/2025",
+            TotalOrders = 8,
+            PreviousTickets = 2,
+            Messages = new()
+            {
+                new()
+                {
+                    Sender = "Trần Hoàng Nam",
+                    Content = "Tôi muốn xin gia hạn thời gian trả xe thêm một ngày. Mong được hỗ trợ.",
+                    Time = new(2025, 7, 28, 9, 4, 0)
+                },
+                new()
+                {
+                    Sender = "Hoàng Minh · RENTO",
+                    Content = "RENTO đã tiếp nhận yêu cầu gia hạn. Chúng tôi đang kiểm tra lịch xe.",
+                    IsStaff = true,
+                    Time = new(2025, 7, 28, 9, 8, 0)
+                }
+            }
+        },
+
+        new()
+        {
+            Id = 3,
+            Code = "TK-0925",
+            Title = "Hoàn tiền tiền đặt cọc",
+            Category = "Thanh toán",
+            Customer = "Lê Thanh Huyền",
+            Phone = "098 662 1840",
+            Email = "huyen.le@email.com",
+            Priority = "Cao",
+            Status = "Chờ phản hồi",
+            AssigneeCode = "NV-0016",
+            TimeAgo = "1 giờ trước",
+            CreatedAt = new(2025, 7, 28, 8, 30, 0),
+            OrderCode = "RE-240725",
+            Car = "Mazda CX-5 Premium",
+            RentalDate = "25/07 – 28/07/2025",
+            TotalOrders = 5,
+            PreviousTickets = 0,
+            Messages = new()
+            {
+                new()
+                {
+                    Sender = "Lê Thanh Huyền",
+                    Content = "Tôi đã trả xe nhưng chưa nhận được tiền hoàn cọc. Nhờ kiểm tra giúp tôi.",
+                    Time = new(2025, 7, 28, 8, 30, 0)
+                }
+            }
+        },
+
+        new()
+        {
+            Id = 4,
+            Code = "TK-0924",
+            Title = "Cập nhật thông tin CCCD",
+            Category = "Tài khoản",
+            Customer = "Phạm Đức Long",
+            Phone = "091 726 3381",
+            Email = "duclong.pham@gmail.com",
+            Priority = "Thấp",
+            Status = "Đã giải quyết",
+            AssigneeCode = "NV-0024",
+            TimeAgo = "3 giờ trước",
+            CreatedAt = new(2025, 7, 28, 7, 0, 0),
+            OrderCode = "RE-240722",
+            Car = "Toyota Camry 2.5Q",
+            RentalDate = "22/07 – 25/07/2025",
+            TotalOrders = 3,
+            PreviousTickets = 1,
+            Messages = new()
+            {
+                new()
+                {
+                    Sender = "Phạm Đức Long",
+                    Content = "Tôi muốn cập nhật lại thông tin căn cước công dân.",
+                    Time = new(2025, 7, 28, 7, 0, 0)
+                }
+            }
+        }
+    };
+
+    private IEnumerable<SupportTicket> filteredTickets =>
+        (sortOrder == "newest"
+            ? tickets.OrderByDescending(x => x.CreatedAt)
+            : tickets.OrderBy(x => x.CreatedAt))
+        .Where(x =>
+            (string.IsNullOrWhiteSpace(searchText) ||
+             x.Code.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             x.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             x.Customer.Contains(searchText, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(statusFilter) || x.Status == statusFilter) &&
+            (string.IsNullOrWhiteSpace(priorityFilter) || x.Priority == priorityFilter));
+
+    protected override void OnInitialized()
+    {
+        selectedTicket = tickets.FirstOrDefault();
+    }
+
+    private void SelectTicket(SupportTicket ticket)
+    {
+        selectedTicket = ticket;
+        replyContent = "";
+        replyError = "";
+        attachmentName = "";
+    }
+
+    private void ToggleFilter()
+    {
+        showFilter = !showFilter;
+    }
+
+    private void ChangeReplyMode(string mode)
+    {
+        replyMode = mode;
+        replyContent = "";
+        replyError = "";
+    }
+
+    private void SendReply()
+    {
+        if (selectedTicket is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(replyContent))
+        {
+            replyError = "Vui lòng nhập nội dung trước khi gửi.";
+            return;
+        }
+
+        selectedTicket.Messages.Add(new SupportMessage
+        {
+            Sender = replyMode == "reply" ? "Hoàng Minh · RENTO" : "Hoàng Minh · Nội bộ",
+            Content = replyContent.Trim(),
+            IsStaff = replyMode == "reply",
+            IsInternal = replyMode == "internal",
+            Time = DateTime.Now
+        });
+
+        if (replyMode == "reply")
+        {
+            selectedTicket.Status = "Chờ phản hồi";
+        }
+
+        replyContent = "";
+        replyError = "";
+        attachmentName = "";
+    }
+
+    private void HandleAttachment(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        if (file.Size > 5 * 1024 * 1024)
+        {
+            replyError = "Tệp đính kèm không được vượt quá 5 MB.";
+            attachmentName = "";
+            return;
+        }
+
+        attachmentName = file.Name;
+        replyError = "";
+    }
+
+    private static string GetInitials(string name)
+    {
+        return string.Join("", name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .TakeLast(2)
+            .Select(x => char.ToUpperInvariant(x[0])));
+    }
+
+    private static string GetPriorityClass(string priority) => priority switch
+    {
+        "Cao" => "priority-high",
+        "Trung bình" => "priority-medium",
+        _ => "priority-low"
+    };
+
+    private static string GetStatusClass(string status) => status switch
+    {
+        "Đang xử lý" => "status-processing",
+        "Chờ phản hồi" => "status-waiting",
+        _ => "status-resolved"
+    };
+
+    private sealed class SupportTicket
+    {
+        public int Id { get; set; }
+        public string Code { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Category { get; set; } = "";
+        public string Customer { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Priority { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string AssigneeCode { get; set; } = "";
+        public string TimeAgo { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+        public string OrderCode { get; set; } = "";
+        public string Car { get; set; } = "";
+        public string RentalDate { get; set; } = "";
+        public int TotalOrders { get; set; }
+        public int PreviousTickets { get; set; }
+        public List<SupportMessage> Messages { get; set; } = new();
+    }
+
+    private sealed class SupportMessage
+    {
+        public string Sender { get; set; } = "";
+        public string Content { get; set; } = "";
+        public string Attachment { get; set; } = "";
+        public DateTime Time { get; set; }
+        public bool IsStaff { get; set; }
+        public bool IsSystem { get; set; }
+        public bool IsInternal { get; set; }
+    }
+}

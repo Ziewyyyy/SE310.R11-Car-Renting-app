@@ -1,0 +1,483 @@
+@page "/admin/reviews"
+@layout AdminLayout
+
+<PageTitle>Đánh giá khách hàng | RENTO</PageTitle>
+
+<div class="review-page">
+
+    <!-- PAGE HEADER -->
+    <div class="review-heading">
+        <div>
+            <div class="review-eyebrow">CHẤT LƯỢNG DỊCH VỤ</div>
+            <h1>Đánh giá khách hàng</h1>
+            <p>Theo dõi phản hồi và cải thiện trải nghiệm thuê xe.</p>
+        </div>
+
+        <div class="review-period">
+            <label>Thời gian</label>
+            <select @bind="selectedPeriod">
+                <option value="7">7 ngày qua</option>
+                <option value="30">30 ngày qua</option>
+                <option value="90">90 ngày qua</option>
+                <option value="365">12 tháng qua</option>
+                <option value="all">Tất cả thời gian</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- REVIEW STATISTICS -->
+    <section class="review-statistics">
+
+        <!-- AVERAGE RATING -->
+        <div class="rating-overview">
+            <strong class="average-rating">4,7</strong>
+
+            <div class="rating-overview-detail">
+                <div class="rating-stars">★★★★★</div>
+                <small>Dựa trên 386 đánh giá</small>
+            </div>
+        </div>
+
+        <!-- STAR DISTRIBUTION -->
+        <div class="rating-distribution">
+
+            @foreach (var item in starStatistics)
+            {
+                <div class="star-stat-row">
+                    <span>@item.Star ★</span>
+
+                    <div class="star-progress">
+                        <div class="star-progress-fill" style="width: @(item.Percentage)%">
+                        </div>
+                    </div>
+
+                    <small>@item.Percentage%</small>
+                </div>
+            }
+
+        </div>
+
+        <!-- OTHER STATISTICS -->
+        <div class="rating-extra-statistics">
+
+            <div>
+                <strong>92%</strong>
+                <small>Khách hàng hài lòng</small>
+            </div>
+
+            <div>
+                <strong>46</strong>
+                <small>Đánh giá tháng này</small>
+            </div>
+
+            <div>
+                <strong>@PendingCount</strong>
+                <small>Chờ phản hồi</small>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SEARCH AND FILTER -->
+    <div class="review-toolbar">
+
+        <div class="review-search">
+            <span>⌕</span>
+
+            <input placeholder="Tìm khách hàng, nội dung..." @bind="searchText" @bind:event="oninput" />
+
+            @if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                <button type="button" @onclick="ClearSearch">×</button>
+            }
+        </div>
+
+        <div class="review-filter">
+            <label>Số sao</label>
+
+            <select @bind="selectedRating">
+                <option value="">Tất cả đánh giá</option>
+                <option value="5">5 sao</option>
+                <option value="4">4 sao</option>
+                <option value="3">3 sao</option>
+                <option value="2">2 sao</option>
+                <option value="1">1 sao</option>
+            </select>
+        </div>
+
+        <div class="review-filter">
+            <label>Trạng thái</label>
+
+            <select @bind="selectedStatus">
+                <option value="">Mọi trạng thái</option>
+                <option value="Đã duyệt">Đã duyệt</option>
+                <option value="Đã phản hồi">Đã phản hồi</option>
+                <option value="Chờ xử lý">Chờ xử lý</option>
+                <option value="Đã ẩn">Đã ẩn</option>
+            </select>
+        </div>
+
+        <span class="review-result-count">
+            @filteredReviews.Count() đánh giá
+        </span>
+
+    </div>
+
+    <!-- REVIEW LIST -->
+    <div class="review-list">
+
+        @foreach (var review in filteredReviews)
+        {
+            <article class="review-card">
+
+                <!-- REVIEW HEADER -->
+                <div class="review-card-header">
+
+                    <div class="review-customer">
+
+                        <span class="review-avatar">
+                            @GetInitials(review.CustomerName)
+                        </span>
+
+                        <div class="review-customer-info">
+                            <strong>@review.CustomerName</strong>
+                            <small>
+                                @review.CarName · @review.ReviewDate.ToString("dd/MM/yyyy")
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <div class="review-rating">
+                        <span class="review-stars">
+                            @for (var star = 1; star <= 5; star++)
+                            {
+                                <span class="@(star <= review.Rating ? "filled" : "empty")">★</span>
+                            }
+                        </span>
+                        <small>@review.Rating.ToString("0.0") / 5</small>
+                    </div>
+
+                    <span class="review-status @GetStatusClass(review.Status)">
+                        <i></i>
+                        @review.Status
+                    </span>
+
+                </div>
+
+                <!-- REVIEW CONTENT -->
+                <div class="review-content">
+                    @review.Content
+                </div>
+
+                <!-- EXISTING REPLY -->
+                @if (!string.IsNullOrWhiteSpace(review.Reply))
+                {
+                    <div class="review-existing-reply">
+                        <strong>RENTO đã phản hồi:</strong>
+                        <p>@review.Reply</p>
+                    </div>
+                }
+
+                <!-- REVIEW ACTIONS -->
+                <div class="review-card-footer">
+
+                    <div class="review-actions">
+
+                        <button type="button" class="review-action-button" @onclick="() => ToggleReply(review.Id)">
+                            <span>▤</span>
+                            @(activeReplyId == review.Id ? "Đóng phản hồi" : "Phản hồi")
+                        </button>
+
+                        <button type="button" class="review-action-button" @onclick="() => ToggleVisibility(review)">
+                            <span>◉</span>
+                            @(review.Status == "Đã ẩn" ? "Hiện đánh giá" : "Ẩn đánh giá")
+                        </button>
+
+                        @if (review.Status == "Chờ xử lý")
+                        {
+                            <button type="button" class="review-action-button approve-action"
+                                @onclick="() => ApproveReview(review)">
+                                <span>✓</span>
+                                Duyệt đánh giá
+                            </button>
+                        }
+
+                    </div>
+
+                </div>
+
+                <!-- REPLY FORM -->
+                @if (activeReplyId == review.Id)
+                {
+                    <div class="review-reply-box">
+
+                        <div class="reply-box-title">
+                            <strong>Phản hồi khách hàng</strong>
+                            <small>Phản hồi sẽ được hiển thị công khai.</small>
+                        </div>
+
+                        <textarea @bind="replyContent" rows="3" placeholder="Nhập nội dung phản hồi...">
+                        </textarea>
+
+                        <div class="reply-box-footer">
+
+                            @if (!string.IsNullOrWhiteSpace(replyError))
+                            {
+                                <span class="review-reply-error">@replyError</span>
+                            }
+
+                            <div class="reply-box-buttons">
+                                <button type="button" class="reply-cancel-button" @onclick="CancelReply">
+                                    Hủy
+                                </button>
+
+                                <button type="button" class="reply-submit-button" @onclick="() => SubmitReply(review)">
+                                    Gửi phản hồi →
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                }
+
+            </article>
+        }
+
+        @if (!filteredReviews.Any())
+        {
+            <div class="review-empty">
+                <span>☆</span>
+                <strong>Không tìm thấy đánh giá</strong>
+                <small>Thử thay đổi từ khóa hoặc bộ lọc của bạn.</small>
+            </div>
+        }
+
+    </div>
+
+</div>
+
+@code {
+
+    private string searchText = "";
+    private string selectedRating = "";
+    private string selectedStatus = "";
+    private string selectedPeriod = "30";
+
+    private int? activeReplyId;
+    private string replyContent = "";
+    private string replyError = "";
+
+    private readonly List<StarStatistic> starStatistics = new()
+{
+new() { Star = 5, Percentage = 72 },
+new() { Star = 4, Percentage = 16 },
+new() { Star = 3, Percentage = 8 },
+new() { Star = 2, Percentage = 2 },
+new() { Star = 1, Percentage = 1 }
+};
+
+    // Dữ liệu minh họa
+    private readonly List<CustomerReview> reviews = new()
+{
+new()
+{
+Id = 1,
+CustomerName = "Nguyễn Thu Hà",
+CarName = "VinFast VF 8 Plus",
+ReviewDate = new(2025, 7, 27),
+Rating = 5,
+Content = "Xe rất mới và sạch sẽ. Thủ tục nhận xe nhanh, nhân viên hỗ trợ tận tình. Mình chắc chắn sẽ tiếp tục sử dụng RENTO.",
+Status = "Đã duyệt"
+},
+
+new()
+{
+Id = 2,
+CustomerName = "Trần Quốc Bảo",
+CarName = "Toyota Camry 2.5Q",
+ReviewDate = new(2025, 7, 25),
+Rating = 4,
+Content = "Trải nghiệm tốt, xe vận hành êm. Thời gian giao xe chậm hơn dự kiến khoảng 15 phút nhưng nhân viên có thông báo trước.",
+Status = "Đã phản hồi",
+Reply = "RENTO cảm ơn anh Bảo đã tin tưởng sử dụng dịch vụ. Chúng tôi sẽ cải thiện thời gian bàn giao xe."
+},
+
+new()
+{
+Id = 3,
+CustomerName = "Lê Mai Phương",
+CarName = "Mercedes-Benz C200",
+ReviewDate = new(2025, 7, 23),
+Rating = 2,
+Content = "Điều hòa xe chưa đủ lạnh và bên trong còn mùi thuốc lá. Mong RENTO kiểm tra kỹ hơn trước khi giao xe.",
+Status = "Chờ xử lý"
+},
+
+new()
+{
+Id = 4,
+CustomerName = "Phạm Minh Tuấn",
+CarName = "Mazda CX-5 Premium",
+ReviewDate = new(2025, 7, 22),
+Rating = 5,
+Content = "Dịch vụ chuyên nghiệp, đặt xe rất dễ dàng. Nhân viên nhiệt tình và hỗ trợ nhanh chóng.",
+Status = "Đã duyệt"
+},
+
+new()
+{
+Id = 5,
+CustomerName = "Đỗ Khánh Linh",
+CarName = "Honda CR-V",
+ReviewDate = new(2025, 7, 21),
+Rating = 3,
+Content = "Xe khá ổn, tuy nhiên ứng dụng đôi lúc tải hơi chậm. Mong hệ thống cải thiện thêm.",
+Status = "Chờ xử lý"
+},
+
+new()
+{
+Id = 6,
+CustomerName = "Nguyễn Hoàng Nam",
+CarName = "VinFast VF 9",
+ReviewDate = new(2025, 7, 20),
+Rating = 4,
+Content = "Xe rộng rãi, phù hợp cho gia đình. Nhìn chung tôi hài lòng với dịch vụ.",
+Status = "Đã duyệt"
+},
+
+new()
+{
+Id = 7,
+CustomerName = "Bùi Ngọc Anh",
+CarName = "Kia Carnival",
+ReviewDate = new(2025, 7, 18),
+Rating = 1,
+Content = "Trải nghiệm không tốt, xe giao trễ và nội thất chưa được vệ sinh kỹ.",
+Status = "Chờ xử lý"
+}
+};
+
+    private int PendingCount => reviews.Count(x =>
+    x.Status == "Chờ xử lý" ||
+    (x.Status != "Đã ẩn" && string.IsNullOrWhiteSpace(x.Reply)));
+
+    private IEnumerable<CustomerReview> filteredReviews =>
+    reviews.Where(review =>
+    review.Status != "Đã ẩn" || selectedStatus == "Đã ẩn")
+    .Where(review =>
+    string.IsNullOrWhiteSpace(searchText) ||
+    review.CustomerName.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+    review.Content.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+    review.CarName.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+    .Where(review =>
+    string.IsNullOrWhiteSpace(selectedRating) ||
+    review.Rating == int.Parse(selectedRating))
+    .Where(review =>
+    string.IsNullOrWhiteSpace(selectedStatus) ||
+    review.Status == selectedStatus)
+    .Where(review =>
+    selectedPeriod == "all" ||
+    review.ReviewDate >= DateTime.Today.AddDays(-int.Parse(selectedPeriod)))
+    .OrderByDescending(review => review.ReviewDate);
+
+    private static string GetInitials(string name)
+    {
+        return string.Join("", name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .TakeLast(2)
+        .Select(x => char.ToUpperInvariant(x[0])));
+    }
+
+    private static string GetStars(int rating)
+    {
+        return new string('★', rating) + new string('★', 5 - rating);
+    }
+
+    private static string GetStatusClass(string status) => status switch
+    {
+        "Đã duyệt" => "review-approved",
+        "Đã phản hồi" => "review-replied",
+        "Chờ xử lý" => "review-pending",
+        _ => "review-hidden"
+    };
+
+    private void ClearSearch()
+    {
+        searchText = "";
+    }
+
+    private void ToggleReply(int id)
+    {
+        if (activeReplyId == id)
+        {
+            CancelReply();
+            return;
+        }
+
+        activeReplyId = id;
+        replyContent = "";
+        replyError = "";
+    }
+
+    private void CancelReply()
+    {
+        activeReplyId = null;
+        replyContent = "";
+        replyError = "";
+    }
+
+    private void SubmitReply(CustomerReview review)
+    {
+        if (string.IsNullOrWhiteSpace(replyContent))
+        {
+            replyError = "Vui lòng nhập nội dung phản hồi.";
+            return;
+        }
+
+        review.Reply = replyContent.Trim();
+        review.Status = "Đã phản hồi";
+
+        CancelReply();
+    }
+
+    private void ToggleVisibility(CustomerReview review)
+    {
+        if (review.Status == "Đã ẩn")
+        {
+            review.Status = string.IsNullOrWhiteSpace(review.Reply)
+            ? "Đã duyệt"
+            : "Đã phản hồi";
+        }
+        else
+        {
+            review.Status = "Đã ẩn";
+        }
+
+        if (activeReplyId == review.Id)
+            CancelReply();
+    }
+
+    private void ApproveReview(CustomerReview review)
+    {
+        review.Status = "Đã duyệt";
+    }
+
+    private sealed class StarStatistic
+    {
+        public int Star { get; set; }
+        public int Percentage { get; set; }
+    }
+
+    private sealed class CustomerReview
+    {
+        public int Id { get; set; }
+        public string CustomerName { get; set; } = "";
+        public string CarName { get; set; } = "";
+        public DateTime ReviewDate { get; set; }
+        public int Rating { get; set; }
+        public string Content { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string Reply { get; set; } = "";
+    }
+}

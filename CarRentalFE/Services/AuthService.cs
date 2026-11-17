@@ -43,7 +43,7 @@ public class AuthService
                 return new AuthResult(false, "Phản hồi từ máy chủ không hợp lệ.");
 
             await _storage.SetAsync("auth", data);
-            return new AuthResult(true);
+            return new AuthResult(true, "", data.User.Role);
         }
         catch (HttpRequestException)
         {

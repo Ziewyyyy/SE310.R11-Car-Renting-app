@@ -26,6 +26,8 @@ builder.Services.AddHttpClient<CarApiService>(client =>
     client.BaseAddress = new Uri(apiBaseUrl);
 });
 
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseUrl) });
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

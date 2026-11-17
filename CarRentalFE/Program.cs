@@ -12,6 +12,11 @@ builder.Services.AddHttpClient<AuthService>(client =>
         new Uri("http://localhost:5000/api/v1/");
 });
 
+builder.Services.AddHttpClient<CarApiService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"] ?? "http://localhost:5110/");
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())

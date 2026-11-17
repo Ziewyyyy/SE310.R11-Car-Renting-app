@@ -1,389 +1,186 @@
-@page "/dashboard"
+@page "/admin/dashboard"
 @layout AdminLayout
-@using Microsoft.AspNetCore.Components
+@using System.Globalization
 
-<PageTitle>RENTO - Bảng điều khiển</PageTitle>
+<PageTitle>Bảng điều khiển | RENTO</PageTitle>
 
-<div class="dashboard">
-
-    <!-- PAGE HEADING -->
-    <div class="dashboard-heading">
-        <div>
-            <span class="eyebrow">PHÂN TÍCH KINH DOANH</span>
-            <h1>Tổng quan vận hành</h1>
-            <p>Số liệu minh họa cho giao diện quản trị; chưa kết nối API.</p>
-        </div>
-
-        <div class="heading-actions">
-            <select class="date-select" @bind="SelectedPeriod">
-                <option value="7 ngày qua">7 ngày qua</option>
-                <option value="30 ngày qua">30 ngày qua</option>
-                <option value="90 ngày qua">90 ngày qua</option>
-                <option value="Năm nay">Năm nay</option>
-            </select>
-
-            <button class="export-button" @onclick="ExportReport">
-                <span>↓</span>
-                Xuất báo cáo
-            </button>
-        </div>
+<div class="dashboard-heading">
+    <div>
+        <div class="eyebrow">PHÂN TÍCH KINH DOANH</div>
+        <h1>Tổng quan vận hành</h1>
+        <p>Theo dõi hiệu suất kinh doanh và đội xe theo thời gian thực.</p>
     </div>
-
-    @if (!string.IsNullOrWhiteSpace(ExportMessage))
-    {
-        <div class="dashboard-message">@ExportMessage</div>
-    }
-
-    <!-- STATISTICS CARDS -->
-    <div class="stats-grid">
-
-        <div class="stat-card">
-            <div class="stat-top">
-                <span>Doanh thu tháng</span>
-                <div class="stat-icon cyan">▤</div>
-            </div>
-            <h2>428,6 triệu ₫</h2>
-            <div class="stat-footer">
-                <span class="positive">↑ 12,4%</span>
-                <span>so với tháng trước</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-top">
-                <span>Đơn thuê mới</span>
-                <div class="stat-icon blue">▣</div>
-            </div>
-            <h2>86</h2>
-            <div class="stat-footer">
-                <span class="positive">↑ 8,2%</span>
-                <span>18 đơn trong tuần</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-top">
-<span>Xe đang cho thuê</span>
-                <div class="stat-icon green">▰</div>
-            </div>
-            <h2>54</h2>
-            <div class="stat-footer">
-                <span class="positive">↑ 4,1%</span>
-                <span>42,2% tổng đội xe</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-top">
-                <span>Đơn chờ xử lý</span>
-                <div class="stat-icon orange">◷</div>
-            </div>
-            <h2>12</h2>
-            <div class="stat-footer">
-                <span class="negative">↓ 3</span>
-                <span>cần xác nhận hôm nay</span>
-            </div>
-        </div>
-
+    <div class="dashboard-heading-actions">
+        <select class="date-select" @bind="selectedRange">
+            <option>30 ngày qua</option>
+            <option>7 ngày qua</option>
+            <option>Hôm nay</option>
+            <option>90 ngày qua</option>
+        </select>
+        <button class="primary-action" type="button" @onclick="ShowExportNotice">↓ &nbsp; Xuất báo cáo</button>
     </div>
+</div>
 
-    <!-- CHART AND VEHICLE RANKING -->
-    <div class="analytics-grid">
+@if (!string.IsNullOrWhiteSpace(notice))
+{
+    <div class="dashboard-notice">@notice</div>
+}
 
-        <!-- REVENUE CHART -->
-        <section class="panel revenue-panel">
-            <div class="panel-heading">
-                <div>
-                    <h3>Doanh thu theo giai đoạn mẫu</h3>
-                    <p>Doanh thu thực nhận từ đơn thuê hoàn thành</p>
+<div class="stats-grid">
+    <article class="stat-card">
+        <div class="stat-card-top"><span>Doanh thu tháng</span><span class="stat-icon cyan">▱</span></div>
+        <strong class="stat-value">428,6 triệu ₫</strong>
+        <div class="stat-change positive">↑ 12,4% <span>so với tháng trước</span></div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-card-top"><span>Đơn thuê mới</span><span class="stat-icon blue">▣</span></div>
+        <strong class="stat-value">86</strong>
+        <div class="stat-change positive">↑ 8,2% <span>18 đơn trong tuần</span></div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-card-top"><span>Xe đang cho thuê</span><span class="stat-icon green">▣</span></div>
+        <strong class="stat-value">54</strong>
+        <div class="stat-change positive">↑ 4,1% <span>42,2% tổng đội xe</span></div>
+    </article>
+    <article class="stat-card">
+        <div class="stat-card-top"><span>Đơn chờ xử lý</span><span class="stat-icon orange">◷</span></div>
+        <strong class="stat-value">12</strong>
+        <div class="stat-change negative">↓ 3 <span>cần xác nhận hôm nay</span></div>
+    </article>
+</div>
+
+<div class="dashboard-middle-grid">
+    <section class="panel revenue-panel">
+        <div class="panel-heading">
+            <div><h2>Doanh thu 7 ngày gần nhất</h2><p>Doanh thu nhận từ đơn thuê hoàn thành</p></div>
+            <div class="chart-legend"><span><i></i> Doanh thu</span><span class="muted-legend">Mục tiêu</span></div>
+        </div>
+        <div class="revenue-summary"><strong>358.400.000 ₫</strong><span>↑ 9,8%</span></div>
+        <div class="revenue-chart">
+            <div class="chart-y-labels"><span>80tr</span><span>60tr</span><span>40tr</span><span>20tr</span><span>0</span></div>
+            <svg viewBox="0 0 900 210" preserveAspectRatio="none" role="img" aria-label="Biểu đồ doanh thu 7 ngày">
+                <defs>
+                    <linearGradient id="revenueFill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#08c9e8" stop-opacity=".25" />
+                        <stop offset="100%" stop-color="#08c9e8" stop-opacity="0" />
+                    </linearGradient>
+                </defs>
+                <g class="chart-grid-lines">
+                    <line x1="0" y1="20" x2="900" y2="20" /><line x1="0" y1="62" x2="900" y2="62" />
+                    <line x1="0" y1="104" x2="900" y2="104" /><line x1="0" y1="146" x2="900" y2="146" />
+                    <line x1="0" y1="188" x2="900" y2="188" />
+                </g>
+                <path class="chart-area" d="M0,165 C45,160 65,145 110,145 S170,150 220,128 S290,112 335,120 S395,115 445,88 S500,95 555,92 S620,62 675,68 S735,74 780,48 S845,56 900,42 L900,188 L0,188 Z" />
+                <path class="chart-line" d="M0,165 C45,160 65,145 110,145 S170,150 220,128 S290,112 335,120 S395,115 445,88 S500,95 555,92 S620,62 675,68 S735,74 780,48 S845,56 900,42" />
+                <circle class="chart-point" cx="900" cy="42" r="4" />
+            </svg>
+            <div class="chart-x-labels"><span>23/07</span><span>24/07</span><span>25/07</span><span>26/07</span><span>27/07</span><span>28/07</span><span>29/07</span></div>
+        </div>
+    </section>
+
+    <div class="right-panels">
+        <section class="panel top-cars-panel">
+            <div class="panel-heading"><div><h2>Xe được thuê nhiều nhất</h2><p>Thống kê lượt thuê tháng này</p></div></div>
+            @foreach (var car in topCars)
+            {
+                <div class="car-stat">
+                    <div class="car-stat-label"><span>@car.Name</span><small>@car.Count lượt</small></div>
+                    <div class="car-progress"><span style="width:@(car.Percent)%"></span></div>
                 </div>
+            }
+        </section>
 
-                <div class="chart-legend">
-                    <span><i class="legend-dot revenue-dot"></i>Doanh thu</span>
-                    <span><i class="legend-dot target-dot"></i>Mục tiêu</span>
-                </div>
-            </div>
-
-            <div class="chart-summary">
-                <strong>358.400.000 ₫</strong>
-                <span>↑ 9,8%</span>
-            </div>
-
-            <div class="revenue-chart">
-                <svg viewBox="0 0 700 310"
-                     preserveAspectRatio="none"
-                     class="chart-svg">
-
-                    <defs>
-                        <linearGradient id="revenueGradient"
-                                        x1="0" y1="0"
-                                        x2="0" y2="1">
-                            <stop offset="0%"
-                                  stop-color="#16c4e6"
-                                  stop-opacity=".28" />
-                            <stop offset="100%"
-                                  stop-color="#16c4e6"
-                                  stop-opacity="0" />
-                        </linearGradient>
-                    </defs>
-
-                    <!-- GRID -->
-                    <line x1="55" y1="35" x2="690" y2="35" class="grid-line"/>
-                    <line x1="55" y1="95" x2="690" y2="95" class="grid-line"/>
-                    <line x1="55" y1="155" x2="690" y2="155" class="grid-line"/>
-                    <line x1="55" y1="215" x2="690" y2="215" class="grid-line"/>
-                    <line x1="55" y1="275" x2="690" y2="275" class="grid-line"/>
-
-                    <!-- Y LABELS -->
-                    <text x="5" y="39" class="axis-label">80tr</text>
-                    <text x="5" y="99" class="axis-label">60tr</text>
-                    <text x="5" y="159" class="axis-label">40tr</text>
-                    <text x="5" y="219" class="axis-label">20tr</text>
-<text x="5" y="279" class="axis-label">0tr</text>
-
-                    <!-- REVENUE AREA -->
-                    <path class="chart-area"
-                          d="M55 230
-                             C95 220 110 205 145 210
-                             S190 185 230 165
-                             S280 195 325 170
-                             S375 95 415 105
-                             S455 130 495 90
-                             S550 85 580 75
-                             S630 25 690 45
-                             L690 275 L55 275 Z" />
-
-                    <!-- REVENUE LINE -->
-                    <path class="chart-line"
-                          d="M55 230
-                             C95 220 110 205 145 210
-                             S190 185 230 165
-                             S280 195 325 170
-                             S375 95 415 105
-                             S455 130 495 90
-                             S550 85 580 75
-                             S630 25 690 45" />
-
-                    <!-- LAST POINT -->
-                    <circle cx="690" cy="45" r="5" class="chart-point"/>
-                    <circle cx="690" cy="45" r="10" class="chart-point-halo"/>
-
-                    <!-- X LABELS -->
-                    <text x="55" y="300" class="axis-label">05/07</text>
-                    <text x="155" y="300" class="axis-label">06/07</text>
-                    <text x="255" y="300" class="axis-label">07/07</text>
-                    <text x="355" y="300" class="axis-label">08/07</text>
-                    <text x="455" y="300" class="axis-label">09/07</text>
-                    <text x="555" y="300" class="axis-label">10/07</text>
-                    <text x="650" y="300" class="axis-label">11/07</text>
-                </svg>
-
-                <div class="chart-tooltip">
-                    <strong>72.400.000 ₫</strong>
-                    <span>Chủ nhật, 28/07</span>
+        <section class="panel status-panel">
+            <div><h2>Phân bổ trạng thái thuê</h2><p>248 đơn hàng tháng này</p></div>
+            <div class="status-content">
+                <div class="donut-chart"><div><strong>248</strong><small>Tổng đơn</small></div></div>
+                <div class="status-legend">
+                    <div><i class="legend-green"></i><span>Hoàn thành</span><b>48%</b></div>
+                    <div><i class="legend-cyan"></i><span>Đang thuê</span><b>27%</b></div>
+                    <div><i class="legend-blue"></i><span>Chờ xác nhận</span><b>17%</b></div>
+                    <div><i class="legend-red"></i><span>Đã hủy</span><b>8%</b></div>
                 </div>
             </div>
         </section>
-
-        <!-- MOST RENTED VEHICLES -->
-        <section class="panel vehicle-panel">
-            <div class="panel-heading">
-                <div>
-                    <h3>Xe được thuê nhiều nhất</h3>
-                    <p>Theo số lượt thuê tháng này</p>
-                </div>
-            </div>
-
-            <div class="vehicle-ranking">
-                @foreach (var vehicle in Vehicles)
-                {
-                    <div class="vehicle-item">
-                        <div class="vehicle-info">
-                            <span>@vehicle.Name</span>
-                            <span>@vehicle.Rentals lượt</span>
-                        </div>
-
-                        <div class="progress-track">
-                            <div class="progress-fill"
-                                 style="@($"width: {vehicle.Percentage}%")">
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-</section>
-
     </div>
+</div>
 
-    <!-- BOTTOM INFORMATION -->
-    <div class="bottom-grid">
-
-        <!-- RECENT RENTALS -->
-        <section class="panel recent-panel">
-            <div class="panel-heading">
-                <div>
-                    <h3>Đơn thuê gần đây</h3>
-                    <p>Theo dõi các giao dịch mới nhất</p>
-                </div>
-                <a href="/rentals" class="view-all">Xem tất cả →</a>
+<div class="dashboard-bottom-grid">
+    <section class="panel recent-orders-panel">
+        <div class="panel-heading orders-heading">
+            <div><h2>Đơn thuê gần đây</h2><p>Các đơn thuê mới nhất trong hệ thống</p></div>
+            <div class="orders-tools">
+                <input class="order-filter" placeholder="⌕  Tìm mã đơn..." @bind="searchText" />
+                <a href="/admin/bookings">Xem tất cả ›</a>
             </div>
-
-            <div class="table-container">
-                <table class="rental-table">
-                    <thead>
+        </div>
+        <div class="table-scroll">
+            <table class="orders-table">
+                <thead><tr><th>MÃ ĐƠN</th><th>KHÁCH HÀNG</th><th>XE THUÊ</th><th>THỜI GIAN</th><th>TỔNG TIỀN</th><th>TRẠNG THÁI</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var order in FilteredOrders)
+                    {
                         <tr>
-                            <th>MÃ ĐƠN</th>
-                            <th>KHÁCH HÀNG</th>
-                            <th>XE THUÊ</th>
-                            <th>NGÀY THUÊ</th>
-                            <th>GIÁ TRỊ</th>
-                            <th>TRẠNG THÁI</th>
+                            <td class="order-code">@order.Code</td>
+                            <td><div class="customer-cell"><span class="customer-avatar">@order.Initials</span><strong>@order.Customer</strong></div></td>
+                            <td><strong>@order.Car</strong><small class="table-subtext">@order.Plate</small></td>
+                            <td>@order.Period</td>
+                            <td class="money-cell">@order.Total</td>
+                            <td><span class="order-status @order.StatusClass">@order.Status</span></td>
+                            <td class="more-cell">···</td>
                         </tr>
-                    </thead>
+                    }
+                    @if (!FilteredOrders.Any())
+                    {
+                        <tr><td colspan="7" class="empty-row">Không tìm thấy đơn thuê phù hợp.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer"><span>Hiển thị @FilteredOrders.Count() trong @orders.Count đơn</span><div class="pagination"><button disabled>‹</button><button class="selected-page">1</button><button disabled>2</button><button disabled>3</button><button disabled>›</button></div></div>
+    </section>
 
-                    <tbody>
-                        @foreach (var rental in RecentRentals)
-                        {
-                            <tr>
-                                <td class="order-id">@rental.Id</td>
-                                <td>@rental.Customer</td>
-                                <td>@rental.Vehicle</td>
-                                <td>@rental.Date</td>
-                                <td class="amount">@rental.Amount</td>
-                                <td>
-                                    <span class="status-badge @rental.StatusClass">
-                                        @rental.Status
-                                    </span>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- QUICK OVERVIEW -->
-        <section class="panel overview-panel">
-            <div class="panel-heading">
-                <div>
-                    <h3>Tình trạng đội xe</h3>
-                    <p>Thống kê phân bổ xe hiện tại</p>
-                </div>
-            </div>
-
-            <div class="fleet-total">
-                <strong>128</strong>
-                <span>Tổng số xe</span>
-            </div>
-
-            <div class="fleet-progress">
-                <div class="fleet-segment rented-segment"></div>
-                <div class="fleet-segment available-segment"></div>
-                <div class="fleet-segment maintenance-segment"></div>
-            </div>
-
-            <div class="fleet-legend">
-                <div>
-                    <i class="fleet-dot rented-dot"></i>
-                    <span>Đang cho thuê</span>
-                    <strong>54</strong>
-                </div>
-
-                <div>
-                    <i class="fleet-dot available-dot"></i>
-                    <span>Sẵn sàng</span>
-                    <strong>62</strong>
-                </div>
-
-                <div>
-<i class="fleet-dot maintenance-dot"></i>
-                    <span>Bảo trì</span>
-                    <strong>12</strong>
-                </div>
-            </div>
-        </section>
-
-    </div>
-
+    <section class="panel activity-panel">
+        <div class="panel-heading"><div><h2>Hoạt động gần đây</h2><p>Cập nhật mới nhất</p></div><button class="plain-more" type="button">···</button></div>
+        <div class="activity-item"><span class="activity-icon activity-success">✓</span><div><strong>Đơn thuê đã được xác nhận</strong><p>RE-240728 · Nguyễn Minh Anh</p><small>◷ 5 phút trước</small></div></div>
+        <div class="activity-item"><span class="activity-icon activity-blue">▣</span><div><strong>Nhận thanh toán mới</strong><p>5.000.000 ₫ · GD-240729</p><small>◷ 24 phút trước</small></div></div>
+        <div class="activity-item"><span class="activity-icon activity-warning">△</span><div><strong>Xe sắp đến hạn bảo dưỡng</strong><p>Mazda CX-5 · 51A-123.45</p><small>◷ 1 giờ trước</small></div></div>
+        <div class="activity-item"><span class="activity-icon activity-danger">♧</span><div><strong>Yêu cầu hỗ trợ mới</strong><p>TK-1027 · Khách cần tư vấn xe</p><small>◷ 2 giờ trước</small></div></div>
+        <a class="activity-all-link" href="/admin/notifications">Xem tất cả hoạt động ›</a>
+    </section>
 </div>
 
 @code {
-    private string SelectedPeriod = "30 ngày qua";
+    private string selectedRange = "30 ngày qua";
+    private string searchText = "";
+    private string notice = "";
 
-    private string ExportMessage = "";
+    private IEnumerable<OrderRow> FilteredOrders =>
+        orders.Where(o => string.IsNullOrWhiteSpace(searchText)
+            || o.Code.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+            || o.Customer.Contains(searchText, StringComparison.OrdinalIgnoreCase));
 
-    private class VehicleStat
+    private readonly List<CarStat> topCars = new()
     {
-        public string Name { get; set; } = "";
-        public int Rentals { get; set; }
-        public int Percentage { get; set; }
-    }
-
-    private class RentalItem
-    {
-        public string Id { get; set; } = "";
-        public string Customer { get; set; } = "";
-        public string Vehicle { get; set; } = "";
-        public string Date { get; set; } = "";
-        public string Amount { get; set; } = "";
-        public string Status { get; set; } = "";
-        public string StatusClass { get; set; } = "";
-    }
-
-    private List<VehicleStat> Vehicles = new()
-    {
-        new() { Name = "VinFast VF 8", Rentals = 18, Percentage = 100 },
-        new() { Name = "Toyota Camry", Rentals = 15, Percentage = 83 },
-        new() { Name = "Mercedes C200", Rentals = 12, Percentage = 67 },
-        new() { Name = "Mazda CX-5", Rentals = 9, Percentage = 50 }
+        new("VinFast VF 8", 18, 92),
+        new("Toyota Camry", 15, 76),
+        new("Mercedes C200", 12, 58),
+        new("Mazda CX-5", 9, 45)
     };
 
-    private List<RentalItem> RecentRentals = new()
+    private readonly List<OrderRow> orders = new()
     {
-        new()
-        {
-            Id = "#RT-2026-001",
-            Customer = "Nguyễn Văn An",
-            Vehicle = "VinFast VF 8",
-            Date = "11/07/2026",
-            Amount = "2.500.000 ₫",
-            Status = "Đang thuê",
-            StatusClass = "status-active"
-        },
-        new()
-        {
-            Id = "#RT-2026-002",
-            Customer = "Trần Minh Anh",
-            Vehicle = "Toyota Camry",
-            Date = "10/07/2026",
-            Amount = "3.200.000 ₫",
-            Status = "Hoàn thành",
-            StatusClass = "status-completed"
-        },
-        new()
-        {
-            Id = "#RT-2026-003",
-            Customer = "Lê Hoàng Nam",
-            Vehicle = "Mazda CX-5",
-            Date = "10/07/2026",
-            Amount = "1.800.000 ₫",
-            Status = "Chờ xử lý",
-            StatusClass = "status-pending"
-        },
-        new()
-        {
-            Id = "#RT-2026-004",
-            Customer = "Phạm Thu Hà",
-            Vehicle = "Mercedes C200",
-            Date = "09/07/2026",
-            Amount = "4.500.000 ₫",
-            Status = "Đang thuê",
-            StatusClass = "status-active"
-        }
+        new("RE-240728", "Nguyễn Minh Anh", "NA", "Mercedes-Benz C200", "51G-332.16", "28/07 – 02/08", "7.500.000 ₫", "Đang thuê", "status-renting"),
+        new("RE-240727", "Trần Hoàng Nam", "TN", "VinFast VF 8 Plus", "51K-218.10", "27/07 – 30/07", "4.350.000 ₫", "Chờ xác nhận", "status-pending"),
+        new("RE-240726", "Lê Thanh Huyền", "LH", "Mazda CX-5 Premium", "51A-123.45", "25/07 – 28/07", "3.800.000 ₫", "Hoàn thành", "status-completed"),
+        new("RE-240725", "Phạm Đức Long", "PL", "Toyota Camry 2.5Q", "51H-456.78", "24/07 – 26/07", "6.250.000 ₫", "Đang thuê", "status-renting")
     };
 
-    private void ExportReport()
+    private void ShowExportNotice()
     {
-        ExportMessage = $"Chức năng xuất file chưa được kết nối. Khoảng thời gian đang chọn: {SelectedPeriod}."; 
+        notice = "Giao diện xuất báo cáo đã được bố trí. Chức năng xuất dữ liệu thật sẽ được kết nối sau khi có API thống kê.";
     }
+
+    private record CarStat(string Name, int Count, int Percent);
+    private record OrderRow(string Code, string Customer, string Initials, string Car, string Plate, string Period, string Total, string Status, string StatusClass);
 }

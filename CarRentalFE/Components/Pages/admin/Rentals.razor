@@ -1,0 +1,457 @@
+@page "/admin/rentals"
+@layout AdminLayout
+
+<PageTitle>Quản lý đơn thuê | RENTO</PageTitle>
+
+<div class="rentals-page">
+    <div class="rentals-heading">
+        <div>
+            <div class="rentals-eyebrow">VẬN HÀNH ĐƠN THUÊ</div>
+            <h1>Quản lý đơn thuê</h1>
+            <p>Theo dõi và xử lý toàn bộ đơn thuê xe trong hệ thống.</p>
+        </div>
+
+        <button class="rentals-create-btn" @onclick="OpenCreateModal">
+            <span>＋</span> Tạo đơn thuê
+        </button>
+    </div>
+
+    <div class="rentals-card">
+        <div class="rentals-filters">
+            <div class="rentals-search">
+                <span>⌕</span>
+                <input type="text"
+                       placeholder="Mã đơn, khách hàng, biển số..."
+                       @bind="searchText"
+                       @bind:event="oninput" />
+            </div>
+
+            <div class="rentals-date-filter">
+                <span>▣</span>
+                <input type="date" @bind="fromDate" />
+                <span class="date-separator">đến</span>
+                <input type="date" @bind="toDate" />
+            </div>
+
+            <div class="rentals-status-filter">
+                <span>Trạng thái</span>
+                <select @bind="selectedStatus">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Chờ xác nhận">Chờ xác nhận</option>
+                    <option value="Đang thuê">Đang thuê</option>
+                    <option value="Hoàn thành">Hoàn thành</option>
+                    <option value="Đã hủy">Đã hủy</option>
+                </select>
+            </div>
+
+            <button class="rentals-clear-btn" @onclick="ClearFilters">
+                Xóa bộ lọc
+            </button>
+        </div>
+
+        <div class="rentals-count">
+            @filteredRentals.Count() đơn thuê
+        </div>
+
+        <div class="rentals-table-wrapper">
+            <table class="rentals-table">
+                <thead>
+                    <tr>
+                        <th>MÃ ĐƠN ↑</th>
+                        <th>KHÁCH HÀNG ↑</th>
+                        <th>XE / BIỂN SỐ</th>
+                        <th>NGÀY NHẬN ↓</th>
+                        <th>NGÀY TRẢ ↓</th>
+                        <th>TỔNG TIỀN ↓</th>
+                        <th>TRẠNG THÁI</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (pagedRentals.Any())
+                    {
+                        @foreach (var rental in pagedRentals)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="rental-code">@rental.Code</span>
+                                </td>
+                                <td>
+                                    <div class="rental-customer">@rental.CustomerName</div>
+                                    <div class="rental-subtext">@rental.Phone</div>
+                                </td>
+                                <td>
+                                    <div class="rental-car">@rental.CarName</div>
+                                    <div class="rental-subtext">@rental.PlateNumber</div>
+                                </td>
+                                <td>@rental.PickupDate.ToString("dd/MM/yyyy")</td>
+                                <td>@rental.ReturnDate.ToString("dd/MM/yyyy")</td>
+                                <td class="rental-total">
+                                    @rental.Total.ToString("N0") đ
+                                </td>
+                                <td>
+                                    <span class="rental-status @GetStatusClass(rental.Status)">
+                                        <span class="status-dot"></span>
+                                        @rental.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="rental-more-btn"
+                                            title="Xem thông tin"
+                                            @onclick="() => ViewRental(rental)">
+                                        ···
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="rentals-empty">
+                                Không tìm thấy đơn thuê phù hợp.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="rentals-pagination">
+            <div class="rentals-pagination-info">
+                @if (filteredRentals.Any())
+                {
+                    <span>
+                        Hiển thị @((currentPage - 1) * pageSize + 1)-@Math.Min(currentPage * pageSize, filteredRentals.Count())
+                        trong @filteredRentals.Count() đơn thuê
+                    </span>
+                }
+                else
+                {
+                    <span>Không có đơn thuê</span>
+                }
+            </div>
+
+            <div class="rentals-page-buttons">
+                <button disabled="@(currentPage == 1)"
+                        @onclick="PreviousPage">‹</button>
+
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    var pageNumber = i;
+
+                    <button class="@(currentPage == pageNumber ? "active" : "")"
+                            @onclick="() => ChangePage(pageNumber)">
+                        @pageNumber
+                    </button>
+                }
+
+                <button disabled="@(currentPage >= totalPages)"
+                        @onclick="NextPage">›</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (showCreateModal)
+{
+    <div class="rentals-modal-overlay" @onclick="CloseCreateModal">
+        <div class="rentals-modal" @onclick:stopPropagation="true">
+            <div class="rentals-modal-header">
+                <div>
+                    <h2>Tạo đơn thuê mới</h2>
+                    <p>Nhập thông tin để tạo đơn thuê xe.</p>
+                </div>
+                <button class="rentals-modal-close" @onclick="CloseCreateModal">×</button>
+            </div>
+
+            <div class="rentals-modal-body">
+                <label>Khách hàng</label>
+                <input class="rentals-modal-input"
+                       placeholder="Nhập tên khách hàng"
+                       @bind="newCustomer" />
+
+                <label>Số điện thoại</label>
+                <input class="rentals-modal-input"
+                       placeholder="Nhập số điện thoại"
+                       @bind="newPhone" />
+
+                <label>Tên xe</label>
+                <input class="rentals-modal-input"
+                       placeholder="Ví dụ: Toyota Camry 2.5Q"
+                       @bind="newCar" />
+
+                <label>Biển số xe</label>
+                <input class="rentals-modal-input"
+                       placeholder="Ví dụ: 51H-926.08"
+                       @bind="newPlate" />
+
+                <div class="rentals-modal-date-row">
+                    <div>
+                        <label>Ngày nhận xe</label>
+                        <input class="rentals-modal-input"
+                               type="date"
+                               @bind="newPickupDate" />
+                    </div>
+                    <div>
+                        <label>Ngày trả xe</label>
+                        <input class="rentals-modal-input"
+                               type="date"
+                               @bind="newReturnDate" />
+                    </div>
+                </div>
+
+                <label>Tổng tiền (VNĐ)</label>
+                <input class="rentals-modal-input"
+                       type="number"
+                       min="0"
+                       placeholder="Nhập tổng tiền"
+                       @bind="newTotal" />
+
+                @if (!string.IsNullOrWhiteSpace(formError))
+                {
+                    <div class="rentals-form-error">@formError</div>
+                }
+            </div>
+
+            <div class="rentals-modal-footer">
+                <button class="rentals-cancel-btn" @onclick="CloseCreateModal">
+                    Hủy
+                </button>
+                <button class="rentals-submit-btn" @onclick="CreateRental">
+                    Tạo đơn thuê
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (selectedRental != null)
+{
+    <div class="rentals-modal-overlay" @onclick="CloseDetails">
+        <div class="rentals-modal rentals-detail-modal" @onclick:stopPropagation="true">
+            <div class="rentals-modal-header">
+                <div>
+                    <h2>Chi tiết đơn thuê</h2>
+                    <p>@selectedRental.Code</p>
+                </div>
+                <button class="rentals-modal-close" @onclick="CloseDetails">×</button>
+            </div>
+
+            <div class="rentals-detail-content">
+                <div><span>Khách hàng</span><strong>@selectedRental.CustomerName</strong></div>
+                <div><span>Số điện thoại</span><strong>@selectedRental.Phone</strong></div>
+                <div><span>Xe thuê</span><strong>@selectedRental.CarName</strong></div>
+                <div><span>Biển số</span><strong>@selectedRental.PlateNumber</strong></div>
+                <div><span>Ngày nhận</span><strong>@selectedRental.PickupDate.ToString("dd/MM/yyyy")</strong></div>
+                <div><span>Ngày trả</span><strong>@selectedRental.ReturnDate.ToString("dd/MM/yyyy")</strong></div>
+                <div><span>Tổng tiền</span><strong>@selectedRental.Total.ToString("N0") đ</strong></div>
+                <div><span>Trạng thái</span><strong>@selectedRental.Status</strong></div>
+            </div>
+
+            <div class="rentals-modal-footer">
+                <button class="rentals-cancel-btn" @onclick="CloseDetails">Đóng</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string searchText = "";
+    private string selectedStatus = "";
+    private DateTime? fromDate;
+    private DateTime? toDate;
+
+    private int currentPage = 1;
+    private const int pageSize = 5;
+
+    private bool showCreateModal;
+    private string formError = "";
+
+    private string newCustomer = "";
+    private string newPhone = "";
+    private string newCar = "";
+    private string newPlate = "";
+    private DateTime newPickupDate = DateTime.Today;
+    private DateTime newReturnDate = DateTime.Today.AddDays(3);
+    private decimal newTotal;
+
+    private RentalItem? selectedRental;
+
+    private List<RentalItem> rentals = new()
+    {
+        new() { Code = "RE-240728", CustomerName = "Nguyễn Minh Anh", Phone = "090 482 7712", CarName = "Mercedes-Benz C200", PlateNumber = "51K-883.26", PickupDate = new(2025, 7, 28), ReturnDate = new(2025, 8, 2), Total = 7500000, Status = "Chờ xác nhận" },
+        new() { Code = "RE-240727", CustomerName = "Trần Hoàng Nam", Phone = "093 218 9046", CarName = "VinFast VF 8 Plus", PlateNumber = "30K-218.46", PickupDate = new(2025, 7, 27), ReturnDate = new(2025, 7, 30), Total = 4350000, Status = "Đang thuê" },
+        new() { Code = "RE-240726", CustomerName = "Lê Thanh Huyền", Phone = "098 662 1840", CarName = "Mazda CX-5 Premium", PlateNumber = "25E-682.17", PickupDate = new(2025, 7, 25), ReturnDate = new(2025, 7, 28), Total = 3600000, Status = "Hoàn thành" },
+        new() { Code = "RE-240725", CustomerName = "Phạm Đức Long", Phone = "091 726 3381", CarName = "Toyota Camry 2.5Q", PlateNumber = "51H-926.08", PickupDate = new(2025, 7, 24), ReturnDate = new(2025, 7, 29), Total = 6250000, Status = "Đã hủy" },
+        new() { Code = "RE-240724", CustomerName = "Đỗ Khánh Linh", Phone = "090 981 2256", CarName = "Tesla Model 3", PlateNumber = "30K-556.72", PickupDate = new(2025, 7, 23), ReturnDate = new(2025, 7, 27), Total = 7200000, Status = "Đang thuê" },
+        new() { Code = "RE-240723", CustomerName = "Nguyễn Quốc Bảo", Phone = "090 123 4567", CarName = "Honda Civic RS", PlateNumber = "51G-123.45", PickupDate = new(2025, 7, 22), ReturnDate = new(2025, 7, 25), Total = 3900000, Status = "Hoàn thành" },
+        new() { Code = "RE-240722", CustomerName = "Võ Ngọc Mai", Phone = "091 234 5678", CarName = "Kia Carnival", PlateNumber = "51H-456.78", PickupDate = new(2025, 7, 21), ReturnDate = new(2025, 7, 26), Total = 8500000, Status = "Chờ xác nhận" },
+        new() { Code = "RE-240721", CustomerName = "Bùi Thành Đạt", Phone = "093 456 7890", CarName = "Hyundai Tucson", PlateNumber = "60A-789.12", PickupDate = new(2025, 7, 20), ReturnDate = new(2025, 7, 23), Total = 4200000, Status = "Đã hủy" },
+        new() { Code = "RE-240720", CustomerName = "Phan Thảo Vy", Phone = "097 111 2233", CarName = "VinFast VF 8 Plus", PlateNumber = "30K-888.99", PickupDate = new(2025, 7, 19), ReturnDate = new(2025, 7, 22), Total = 4350000, Status = "Hoàn thành" },
+        new() { Code = "RE-240719", CustomerName = "Lý Minh Khang", Phone = "096 222 3344", CarName = "Mazda CX-5 Premium", PlateNumber = "25E-682.17", PickupDate = new(2025, 7, 18), ReturnDate = new(2025, 7, 21), Total = 3600000, Status = "Đang thuê" }
+    };
+
+    private IEnumerable<RentalItem> filteredRentals
+    {
+        get
+        {
+            var query = rentals.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                var keyword = searchText.Trim();
+
+                query = query.Where(x =>
+                    x.Code.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                    x.CustomerName.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                    x.PlateNumber.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedStatus))
+            {
+                query = query.Where(x => x.Status == selectedStatus);
+            }
+
+            if (fromDate.HasValue)
+            {
+                query = query.Where(x => x.PickupDate.Date >= fromDate.Value.Date);
+            }
+
+            if (toDate.HasValue)
+            {
+                query = query.Where(x => x.PickupDate.Date <= toDate.Value.Date);
+            }
+
+            return query.OrderByDescending(x => x.Code);
+        }
+    }
+
+    private List<RentalItem> pagedRentals =>
+        filteredRentals
+            .Skip((currentPage - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+    private int totalPages =>
+        Math.Max(1, (int)Math.Ceiling(filteredRentals.Count() / (double)pageSize));
+
+    private string GetStatusClass(string status) => status switch
+    {
+        "Chờ xác nhận" => "status-pending",
+        "Đang thuê" => "status-renting",
+        "Hoàn thành" => "status-completed",
+        "Đã hủy" => "status-cancelled",
+        _ => ""
+    };
+
+    private void ClearFilters()
+    {
+        searchText = "";
+        selectedStatus = "";
+        fromDate = null;
+        toDate = null;
+        currentPage = 1;
+    }
+
+    private void ChangePage(int page)
+    {
+        currentPage = page;
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+            currentPage--;
+    }
+
+    private void NextPage()
+    {
+        if (currentPage < totalPages)
+            currentPage++;
+    }
+
+    private void OpenCreateModal()
+    {
+        formError = "";
+        showCreateModal = true;
+    }
+
+    private void CloseCreateModal()
+    {
+        showCreateModal = false;
+        formError = "";
+    }
+
+    private void CreateRental()
+    {
+        if (string.IsNullOrWhiteSpace(newCustomer) ||
+            string.IsNullOrWhiteSpace(newPhone) ||
+            string.IsNullOrWhiteSpace(newCar) ||
+            string.IsNullOrWhiteSpace(newPlate))
+        {
+            formError = "Vui lòng nhập đầy đủ thông tin khách hàng và xe.";
+            return;
+        }
+
+        if (newReturnDate.Date <= newPickupDate.Date)
+        {
+            formError = "Ngày trả xe phải sau ngày nhận xe.";
+            return;
+        }
+
+        if (newTotal <= 0)
+        {
+            formError = "Tổng tiền phải lớn hơn 0.";
+            return;
+        }
+
+        var nextNumber = rentals.Count + 240719;
+        rentals.Insert(0, new RentalItem
+        {
+            Code = $"RE-{nextNumber}",
+            CustomerName = newCustomer.Trim(),
+            Phone = newPhone.Trim(),
+            CarName = newCar.Trim(),
+            PlateNumber = newPlate.Trim(),
+            PickupDate = newPickupDate,
+            ReturnDate = newReturnDate,
+            Total = newTotal,
+            Status = "Chờ xác nhận"
+        });
+
+        ClearFilters();
+        currentPage = 1;
+        CloseCreateModal();
+
+        newCustomer = "";
+        newPhone = "";
+        newCar = "";
+        newPlate = "";
+        newTotal = 0;
+    }
+
+    private void ViewRental(RentalItem rental)
+    {
+        selectedRental = rental;
+    }
+
+    private void CloseDetails()
+    {
+        selectedRental = null;
+    }
+
+    private class RentalItem
+    {
+        public string Code { get; set; } = "";
+        public string CustomerName { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public string CarName { get; set; } = "";
+        public string PlateNumber { get; set; } = "";
+        public DateTime PickupDate { get; set; }
+        public DateTime ReturnDate { get; set; }
+        public decimal Total { get; set; }
+        public string Status { get; set; } = "";
+    }
+}

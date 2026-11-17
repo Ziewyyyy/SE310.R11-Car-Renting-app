@@ -1,0 +1,512 @@
+
+@page "/admin/payments"
+@layout AdminLayout
+
+<PageTitle>Giao dịch tài chính | RENTO</PageTitle>
+
+<div class="payments-page">
+    <div class="payments-heading">
+        <div>
+            <div class="payments-eyebrow">TÀI CHÍNH & THANH TOÁN</div>
+            <h1>Giao dịch tài chính</h1>
+            <p>Theo dõi các khoản thu, hoàn tiền và thanh toán đang chờ xử lý.</p>
+        </div>
+
+        <button class="payments-primary-btn" @onclick="OpenProcessModal">
+            <span>＋</span> Xử lý thanh toán
+        </button>
+    </div>
+
+    <!-- Statistics -->
+    <div class="payments-stats">
+        <div class="payment-stat-card">
+            <div class="payment-stat-top">
+                <span>Tổng đã thu</span>
+                <div class="payment-stat-icon cyan">▣</div>
+            </div>
+            <strong>386,4 triệu đ</strong>
+            <small class="stat-positive">↑ 10,8% <span>trong tháng 07</span></small>
+        </div>
+
+        <div class="payment-stat-card">
+            <div class="payment-stat-top">
+                <span>Chờ thanh toán</span>
+                <div class="payment-stat-icon orange">◷</div>
+            </div>
+            <strong>24,8 triệu đ</strong>
+            <small class="stat-negative">↓ 8 giao dịch <span>cần xử lý</span></small>
+        </div>
+
+        <div class="payment-stat-card">
+            <div class="payment-stat-top">
+                <span>Đã hoàn tiền</span>
+                <div class="payment-stat-icon blue">↓</div>
+            </div>
+            <strong>18,2 triệu đ</strong>
+            <small class="stat-positive">↑ 4,2% <span>so với tháng trước</span></small>
+        </div>
+
+        <div class="payment-stat-card">
+            <div class="payment-stat-top">
+                <span>Tổng giao dịch</span>
+                <div class="payment-stat-icon green">▤</div>
+            </div>
+            <strong>312</strong>
+            <small class="stat-positive">↑ 18,6% <span>trong tháng này</span></small>
+        </div>
+    </div>
+
+    <!-- Transactions -->
+    <section class="payments-card">
+        <div class="payments-filters">
+            <div class="payments-search">
+                <span>⌕</span>
+                <input placeholder="Mã giao dịch, mã đơn..."
+                       @bind="searchText"
+                       @bind:event="oninput" />
+            </div>
+
+            <div class="payments-date-filter">
+                <span>▣</span>
+                <input type="date" @bind="fromDate" />
+                <span>đến</span>
+                <input type="date" @bind="toDate" />
+            </div>
+
+            <div class="payments-select-filter">
+                <span>Phương thức</span>
+                <select @bind="selectedMethod">
+                    <option value="">Tất cả</option>
+                    <option value="Chuyển khoản">Chuyển khoản</option>
+                    <option value="Thẻ tín dụng">Thẻ tín dụng</option>
+                    <option value="Tiền mặt">Tiền mặt</option>
+                </select>
+            </div>
+
+            <div class="payments-select-filter">
+                <span>Trạng thái</span>
+                <select @bind="selectedStatus">
+                    <option value="">Tất cả</option>
+                    <option value="Thành công">Thành công</option>
+                    <option value="Chờ xử lý">Chờ xử lý</option>
+                    <option value="Hoàn tiền">Hoàn tiền</option>
+                    <option value="Thất bại">Thất bại</option>
+                </select>
+            </div>
+
+            <button class="payments-clear-btn" @onclick="ClearFilters">
+                Xóa lọc
+            </button>
+        </div>
+
+        <div class="payments-result-count">
+            @filteredPayments.Count() giao dịch
+        </div>
+
+        <div class="payments-table-wrapper">
+            <table class="payments-table">
+                <thead>
+                    <tr>
+                        <th>MÃ GIAO DỊCH</th>
+                        <th>ĐƠN LIÊN QUAN</th>
+                        <th>KHÁCH HÀNG</th>
+                        <th>PHƯƠNG THỨC</th>
+                        <th>SỐ TIỀN</th>
+                        <th>THỜI GIAN</th>
+                        <th>TRẠNG THÁI</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (pagedPayments.Any())
+                    {
+                        @foreach (var payment in pagedPayments)
+                        {
+                            <tr>
+                                <td>
+                                    <strong class="payment-code">@payment.Code</strong>
+                                </td>
+                                <td class="payment-order">@payment.OrderCode</td>
+                                <td class="payment-customer">@payment.Customer</td>
+                                <td>
+                                    <span class="payment-method">
+                                        <span class="method-icon">
+                                            @GetMethodIcon(payment.Method)
+                                        </span>
+                                        @payment.Method
+                                    </span>
+                                </td>
+                                <td class="payment-amount">
+                                    @payment.Amount.ToString("N0") đ
+                                </td>
+                                <td class="payment-time">@payment.Time</td>
+                                <td>
+                                    <span class="payment-status @GetStatusClass(payment.Status)">
+                                        <span class="payment-status-dot"></span>
+                                        @payment.Status
+                                    </span>
+                                </td>
+                                <td class="payment-actions">
+                                    @if (payment.Status == "Chờ xử lý")
+                                    {
+                                        <button class="payment-action-btn"
+                                                @onclick="() => OpenProcessModal(payment)">
+                                            Xử lý
+                                        </button>
+                                    }
+                                    else if (payment.Status == "Thất bại")
+                                    {
+                                        <button class="payment-action-btn"
+                                                @onclick="() => RetryPayment(payment)">
+                                            Thử lại
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="payment-icon-btn"
+                                                title="Xem chi tiết"
+                                                @onclick="() => ViewPayment(payment)">
+                                            ⋯
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="payments-empty">
+                                Không tìm thấy giao dịch phù hợp.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="payments-pagination">
+            <span>
+                @if (filteredPayments.Any())
+                {
+                    @($"Hiển thị {(currentPage - 1) * pageSize + 1}-{Math.Min(currentPage * pageSize, filteredPayments.Count())} trong {filteredPayments.Count()} giao dịch")
+                }
+                else
+                {
+                    @("Không có giao dịch")
+                }
+            </span>
+
+            <div class="payments-page-buttons">
+                <button disabled="@(currentPage == 1)"
+                        @onclick="PreviousPage">‹</button>
+
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    var pageNumber = i;
+                    <button class="@(currentPage == pageNumber ? "active" : "")"
+                            @onclick="() => ChangePage(pageNumber)">
+                        @pageNumber
+                    </button>
+                }
+
+                <button disabled="@(currentPage >= totalPages)"
+                        @onclick="NextPage">›</button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Process payment modal -->
+@if (showProcessModal)
+{
+    <div class="payments-modal-overlay" @onclick="CloseProcessModal">
+        <div class="payments-modal" @onclick:stopPropagation="true">
+            <div class="payments-modal-header">
+                <div>
+                    <h2>Xử lý thanh toán</h2>
+                    <p>Nhập thông tin giao dịch cần ghi nhận.</p>
+                </div>
+                <button class="payments-modal-close" @onclick="CloseProcessModal">×</button>
+            </div>
+
+            <div class="payments-modal-body">
+                <label>Mã đơn thuê</label>
+                <input @bind="formOrderCode" placeholder="Ví dụ: RE-240728" />
+
+                <label>Khách hàng</label>
+                <input @bind="formCustomer" placeholder="Tên khách hàng" />
+
+                <label>Phương thức thanh toán</label>
+                <select @bind="formMethod">
+                    <option value="Chuyển khoản">Chuyển khoản</option>
+                    <option value="Thẻ tín dụng">Thẻ tín dụng</option>
+                    <option value="Tiền mặt">Tiền mặt</option>
+                </select>
+
+                <label>Số tiền (VNĐ)</label>
+                <input type="number" min="1" @bind="formAmount" />
+
+                <label>Trạng thái</label>
+                <select @bind="formStatus">
+                    <option value="Chờ xử lý">Chờ xử lý</option>
+                    <option value="Thành công">Thành công</option>
+                </select>
+
+                @if (!string.IsNullOrWhiteSpace(formError))
+                {
+                    <div class="payments-form-error">@formError</div>
+                }
+            </div>
+
+            <div class="payments-modal-footer">
+                <button class="payments-cancel-btn" @onclick="CloseProcessModal">
+                    Hủy
+                </button>
+                <button class="payments-submit-btn" @onclick="SavePayment">
+                    Lưu giao dịch
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Detail modal -->
+@if (selectedPayment != null)
+{
+    <div class="payments-modal-overlay" @onclick="CloseDetails">
+        <div class="payments-modal" @onclick:stopPropagation="true">
+            <div class="payments-modal-header">
+                <div>
+                    <h2>Chi tiết giao dịch</h2>
+                    <p>@selectedPayment.Code</p>
+                </div>
+                <button class="payments-modal-close" @onclick="CloseDetails">×</button>
+            </div>
+
+            <div class="payments-detail-list">
+                <div><span>Mã giao dịch</span><strong>@selectedPayment.Code</strong></div>
+                <div><span>Mã đơn thuê</span><strong>@selectedPayment.OrderCode</strong></div>
+                <div><span>Khách hàng</span><strong>@selectedPayment.Customer</strong></div>
+                <div><span>Phương thức</span><strong>@selectedPayment.Method</strong></div>
+                <div><span>Số tiền</span><strong>@selectedPayment.Amount.ToString("N0") đ</strong></div>
+                <div><span>Thời gian</span><strong>@selectedPayment.Time</strong></div>
+                <div><span>Trạng thái</span><strong>@selectedPayment.Status</strong></div>
+            </div>
+
+            <div class="payments-modal-footer">
+                <button class="payments-cancel-btn" @onclick="CloseDetails">Đóng</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string searchText = "";
+    private string selectedMethod = "";
+    private string selectedStatus = "";
+    private DateTime? fromDate;
+    private DateTime? toDate;
+
+    private int currentPage = 1;
+    private const int pageSize = 5;
+
+    private bool showProcessModal;
+    private string formError = "";
+
+    private string formOrderCode = "";
+    private string formCustomer = "";
+    private string formMethod = "Chuyển khoản";
+    private string formStatus = "Chờ xử lý";
+    private decimal formAmount;
+
+    private PaymentItem? selectedPayment;
+
+    private List<PaymentItem> payments = new()
+    {
+        new() { Code = "GD-87292", OrderCode = "RE-240728", Customer = "Nguyễn Minh Anh", Method = "Chuyển khoản", Amount = 3000000, Time = "28/07/2025 - 09:31", Date = new(2025, 7, 28, 9, 31, 0), Status = "Thành công" },
+        new() { Code = "GD-87291", OrderCode = "RE-240727", Customer = "Trần Hoàng Nam", Method = "Thẻ tín dụng", Amount = 4350000, Time = "27/07/2025 - 16:42", Date = new(2025, 7, 27, 16, 42, 0), Status = "Chờ xử lý" },
+        new() { Code = "GD-87288", OrderCode = "RE-240726", Customer = "Lê Thanh Huyền", Method = "Tiền mặt", Amount = 3600000, Time = "25/07/2025 - 08:15", Date = new(2025, 7, 25, 8, 15, 0), Status = "Thành công" },
+        new() { Code = "GD-87284", OrderCode = "RE-240725", Customer = "Phạm Đức Long", Method = "Chuyển khoản", Amount = 2500000, Time = "24/07/2025 - 14:06", Date = new(2025, 7, 24, 14, 6, 0), Status = "Hoàn tiền" },
+        new() { Code = "GD-87280", OrderCode = "RE-240724", Customer = "Đỗ Khánh Linh", Method = "Thẻ tín dụng", Amount = 7200000, Time = "23/07/2025 - 10:22", Date = new(2025, 7, 23, 10, 22, 0), Status = "Thất bại" },
+        new() { Code = "GD-87278", OrderCode = "RE-240723", Customer = "Nguyễn Quốc Bảo", Method = "Tiền mặt", Amount = 3900000, Time = "22/07/2025 - 11:20", Date = new(2025, 7, 22, 11, 20, 0), Status = "Thành công" },
+        new() { Code = "GD-87275", OrderCode = "RE-240722", Customer = "Võ Ngọc Mai", Method = "Chuyển khoản", Amount = 8500000, Time = "21/07/2025 - 13:40", Date = new(2025, 7, 21, 13, 40, 0), Status = "Chờ xử lý" },
+        new() { Code = "GD-87270", OrderCode = "RE-240721", Customer = "Bùi Thành Đạt", Method = "Thẻ tín dụng", Amount = 4200000, Time = "20/07/2025 - 15:10", Date = new(2025, 7, 20, 15, 10, 0), Status = "Thành công" },
+        new() { Code = "GD-87266", OrderCode = "RE-240720", Customer = "Phan Thảo Vy", Method = "Chuyển khoản", Amount = 4350000, Time = "19/07/2025 - 09:10", Date = new(2025, 7, 19, 9, 10, 0), Status = "Hoàn tiền" },
+        new() { Code = "GD-87260", OrderCode = "RE-240719", Customer = "Lý Minh Khang", Method = "Tiền mặt", Amount = 3600000, Time = "18/07/2025 - 10:30", Date = new(2025, 7, 18, 10, 30, 0), Status = "Thành công" }
+    };
+
+    private IEnumerable<PaymentItem> filteredPayments
+    {
+        get
+        {
+            var query = payments.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                var keyword = searchText.Trim();
+
+                query = query.Where(x =>
+                    x.Code.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                    x.OrderCode.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                    x.Customer.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedMethod))
+                query = query.Where(x => x.Method == selectedMethod);
+
+            if (!string.IsNullOrWhiteSpace(selectedStatus))
+                query = query.Where(x => x.Status == selectedStatus);
+
+            if (fromDate.HasValue)
+                query = query.Where(x => x.Date.Date >= fromDate.Value.Date);
+
+            if (toDate.HasValue)
+                query = query.Where(x => x.Date.Date <= toDate.Value.Date);
+
+            return query.OrderByDescending(x => x.Date);
+        }
+    }
+
+    private List<PaymentItem> pagedPayments =>
+        filteredPayments.Skip((currentPage - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
+
+    private int totalPages =>
+        Math.Max(1, (int)Math.Ceiling(filteredPayments.Count() / (double)pageSize));
+
+    private string GetStatusClass(string status) => status switch
+    {
+        "Thành công" => "success",
+        "Chờ xử lý" => "pending",
+        "Hoàn tiền" => "refunded",
+        "Thất bại" => "failed",
+        _ => ""
+    };
+
+    private string GetMethodIcon(string method) => method switch
+    {
+        "Chuyển khoản" => "▤",
+        "Thẻ tín dụng" => "▣",
+        "Tiền mặt" => "▱",
+        _ => "▤"
+    };
+
+    private void ClearFilters()
+    {
+        searchText = "";
+        selectedMethod = "";
+        selectedStatus = "";
+        fromDate = null;
+        toDate = null;
+        currentPage = 1;
+    }
+
+    private void ChangePage(int page)
+    {
+        currentPage = page;
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+            currentPage--;
+    }
+
+    private void NextPage()
+    {
+        if (currentPage < totalPages)
+            currentPage++;
+    }
+
+    private void OpenProcessModal()
+    {
+        selectedPayment = null;
+        formOrderCode = "";
+        formCustomer = "";
+        formMethod = "Chuyển khoản";
+        formStatus = "Chờ xử lý";
+        formAmount = 0;
+        formError = "";
+        showProcessModal = true;
+    }
+
+    private void OpenProcessModal(PaymentItem payment)
+    {
+        formOrderCode = payment.OrderCode;
+        formCustomer = payment.Customer;
+        formMethod = payment.Method;
+        formAmount = payment.Amount;
+        formStatus = "Thành công";
+        formError = "";
+        showProcessModal = true;
+    }
+
+    private void CloseProcessModal()
+    {
+        showProcessModal = false;
+        formError = "";
+    }
+
+    private void SavePayment()
+    {
+        if (string.IsNullOrWhiteSpace(formOrderCode) ||
+            string.IsNullOrWhiteSpace(formCustomer))
+        {
+            formError = "Vui lòng nhập mã đơn thuê và tên khách hàng.";
+            return;
+        }
+
+        if (formAmount <= 0)
+        {
+            formError = "Số tiền phải lớn hơn 0.";
+            return;
+        }
+
+        var now = DateTime.Now;
+        var newPayment = new PaymentItem
+        {
+            Code = $"GD-{87300 + payments.Count}",
+            OrderCode = formOrderCode.Trim(),
+            Customer = formCustomer.Trim(),
+            Method = formMethod,
+            Amount = formAmount,
+            Date = now,
+            Time = now.ToString("dd/MM/yyyy - HH:mm"),
+            Status = formStatus
+        };
+
+        payments.Insert(0, newPayment);
+        currentPage = 1;
+        CloseProcessModal();
+    }
+
+    private void RetryPayment(PaymentItem payment)
+    {
+        payment.Status = "Chờ xử lý";
+    }
+
+    private void ViewPayment(PaymentItem payment)
+    {
+        selectedPayment = payment;
+    }
+
+    private void CloseDetails()
+    {
+        selectedPayment = null;
+    }
+
+    private class PaymentItem
+    {
+        public string Code { get; set; } = "";
+        public string OrderCode { get; set; } = "";
+        public string Customer { get; set; } = "";
+        public string Method { get; set; } = "";
+        public decimal Amount { get; set; }
+        public string Time { get; set; } = "";
+        public DateTime Date { get; set; }
+        public string Status { get; set; } = "";
+    }
+}

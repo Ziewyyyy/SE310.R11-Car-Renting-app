@@ -1,0 +1,145 @@
+@page "/login"
+@layout EmptyLayout
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+
+<PageTitle>Đăng nhập | RENTO</PageTitle>
+
+<link rel="stylesheet" href="css/user-login.css" />
+
+<div class="user-login-page">
+    <header class="user-login-header">
+        <a href="/" class="user-login-logo">
+            <span class="user-login-logo-icon">R</span>
+            <span>RENTO</span>
+        </a>
+
+        <div class="user-login-header-right">
+            <span>Chưa có tài khoản?</span>
+            <a href="/user/register">Đăng ký</a>
+        </div>
+    </header>
+
+    <main class="user-login-content">
+        <div class="user-login-decoration decoration-one"></div>
+        <div class="user-login-decoration decoration-two"></div>
+
+        <section class="user-login-card">
+            <div class="user-login-intro">
+                <div class="user-login-icon">👋</div>
+                <h1>Chào mừng trở lại!</h1>
+                <p>Đăng nhập để tiếp tục hành trình cùng RENTO.</p>
+            </div>
+
+            <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                <DataAnnotationsValidator />
+
+                <div class="user-login-field">
+                    <label for="email">Địa chỉ email</label>
+                    <InputText id="email"
+                               class="user-login-input"
+                               type="email"
+                               placeholder="Nhập email của bạn"
+                               @bind-Value="loginModel.Email" />
+                    <ValidationMessage For="@(() => loginModel.Email)" />
+                </div>
+
+                <div class="user-login-field">
+                    <div class="user-login-label-row">
+                        <label for="password">Mật khẩu</label>
+                        <a href="/forgot-password">Quên mật khẩu?</a>
+                    </div>
+
+                    <div class="user-login-password-wrap">
+                        <InputText id="password"
+                                   class="user-login-input"
+                                   type="@(showPassword ? "text" : "password")"
+                                   placeholder="Nhập mật khẩu"
+                                   @bind-Value="loginModel.Password" />
+
+                        <button type="button"
+                                class="user-login-toggle"
+                                @onclick="TogglePassword">
+                            @(showPassword ? "Ẩn" : "Hiện")
+                        </button>
+                    </div>
+                    <ValidationMessage For="@(() => loginModel.Password)" />
+                </div>
+
+                <label class="user-login-remember">
+                    <InputCheckbox @bind-Value="loginModel.RememberMe" />
+                    <span>Ghi nhớ đăng nhập</span>
+                </label>
+
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="user-login-error">
+                        @errorMessage
+                    </div>
+                }
+
+                <button type="submit" class="user-login-submit">
+                    Đăng nhập
+                    <span>→</span>
+                </button>
+            </EditForm>
+
+            <div class="user-login-divider">
+                <span>hoặc</span>
+            </div>
+
+            <div class="user-login-register">
+                Bạn chưa có tài khoản?
+                <a href="/register">Tạo tài khoản ngay</a>
+            </div>
+
+            <div class="user-login-security">
+                <span>🔒</span>
+                Thông tin của bạn được bảo mật an toàn
+            </div>
+        </section>
+
+        <p class="user-login-footer">
+            © 2026 RENTO. Đồng hành trên mọi hành trình.
+        </p>
+    </main>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+
+    private bool showPassword;
+    private string errorMessage = string.Empty;
+
+    private void TogglePassword()
+    {
+        showPassword = !showPassword;
+    }
+
+    private async Task HandleLogin()
+    {
+        errorMessage = string.Empty;
+
+        // TODO:
+        // Gọi AuthService/API để xác thực tài khoản người dùng.
+        // Khi đăng nhập thành công, điều hướng đến trang chủ hoặc trang trước đó.
+
+        await Task.CompletedTask;
+
+        errorMessage = "Chưa kết nối chức năng xác thực. Vui lòng tích hợp AuthService.";
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Vui lòng nhập email.")]
+        [EmailAddress(ErrorMessage = "Email không đúng định dạng.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; }
+    }
+}

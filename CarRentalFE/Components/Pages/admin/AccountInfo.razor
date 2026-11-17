@@ -1,0 +1,287 @@
+@page "/admin/account-info"
+@layout AdminLayout
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Cài đặt tài khoản | RENTO</PageTitle>
+
+<div class="account-page">
+    <div class="account-page-heading">
+        <div>
+            <div class="account-eyebrow">TÀI KHOẢN &amp; BẢO MẬT</div>
+            <h1>Cài đặt tài khoản</h1>
+            <p>Quản lý thông tin cá nhân và các tùy chọn bảo mật của bạn.</p>
+        </div>
+    </div>
+
+    <section class="account-identity-card">
+        <div class="identity-left">
+            <div class="identity-avatar">
+                HM
+                <span class="avatar-edit-mark">♙</span>
+            </div>
+            <div class="identity-info">
+                <div class="identity-name-row">
+                    <h2>@profile.FullName</h2>
+                    <span class="active-badge"><i></i> Đang hoạt động</span>
+                </div>
+                <p>ID nhân viên: <strong>@profile.EmployeeCode</strong></p>
+            </div>
+        </div>
+        <div class="identity-meta">
+            <div><span>Vai trò</span><strong>Quản trị viên hệ thống</strong></div>
+            <div><span>Chi nhánh</span><strong>RENTO Hồ Chí Minh</strong></div>
+        </div>
+    </section>
+
+    <section class="account-settings-card">
+        <div class="account-tabs" role="tablist">
+            <button type="button" class="account-tab @(activeTab == "profile" ? "active" : "")" @onclick='() => ChangeTab("profile")'>
+                <span>♙</span> Thông tin cá nhân
+            </button>
+            <button type="button" class="account-tab @(activeTab == "password" ? "active" : "")" @onclick='() => ChangeTab("password")'>
+                <span>♙</span> Đổi mật khẩu
+            </button>
+            <button type="button" class="account-tab @(activeTab == "security" ? "active" : "")" @onclick='() => ChangeTab("security")'>
+                <span>♢</span> Bảo mật 2FA
+            </button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="account-feedback @(isError ? "error" : "success")">@message</div>
+        }
+
+        @if (activeTab == "profile")
+        {
+            <EditForm Model="profile" OnValidSubmit="SaveProfile">
+                <DataAnnotationsValidator />
+                <div class="account-form-content">
+                    <div class="form-section-heading">
+                        <div><h3>Thông tin cá nhân</h3><p>Cập nhật thông tin liên hệ và hồ sơ nhân viên.</p></div>
+                        <span>Cập nhật lần cuối: @lastUpdated</span>
+                    </div>
+                    <div class="account-fields-grid">
+                        <div class="account-field">
+                            <label for="fullName">Họ và tên <b>*</b></label>
+                            <InputText id="fullName" class="account-input" @bind-Value="profile.FullName" />
+                            <ValidationMessage For="() => profile.FullName" />
+                        </div>
+                        <div class="account-field">
+                            <label for="employeeCode">Mã nhân viên</label>
+                            <InputText id="employeeCode" class="account-input readonly-input" @bind-Value="profile.EmployeeCode" disabled />
+                        </div>
+                        <div class="account-field">
+                            <label for="email">Email công việc <b>*</b></label>
+                            <InputText id="email" type="email" class="account-input" @bind-Value="profile.Email" />
+                            <ValidationMessage For="() => profile.Email" />
+                        </div>
+                        <div class="account-field">
+                            <label for="phone">Số điện thoại</label>
+                            <InputText id="phone" class="account-input" @bind-Value="profile.Phone" />
+                        </div>
+                        <div class="account-field">
+                            <label for="birthDate">Ngày sinh</label>
+                            <InputDate id="birthDate" class="account-input" @bind-Value="profile.BirthDate" />
+                        </div>
+                        <div class="account-field">
+                            <label for="address">Địa chỉ</label>
+                            <InputText id="address" class="account-input" @bind-Value="profile.Address" />
+                        </div>
+                    </div>
+                </div>
+                <div class="account-form-footer">
+                    <button type="button" class="account-button secondary" @onclick="ResetProfile">Hủy</button>
+                    <button type="submit" class="account-button primary">Lưu thay đổi</button>
+                </div>
+            </EditForm>
+        }
+        else if (activeTab == "password")
+        {
+            <EditForm Model="passwordModel" OnValidSubmit="ChangePassword">
+                <DataAnnotationsValidator />
+                <div class="account-form-content">
+                    <div class="form-section-heading">
+                        <div><h3>Đổi mật khẩu</h3><p>Sử dụng mật khẩu mạnh để bảo vệ tài khoản quản trị của bạn.</p></div>
+                    </div>
+                    <div class="account-fields-grid password-fields">
+                        <div class="account-field">
+                            <label for="currentPassword">Mật khẩu hiện tại <b>*</b></label>
+                            <InputText id="currentPassword" type="password" class="account-input" @bind-Value="passwordModel.CurrentPassword" />
+                            <ValidationMessage For="() => passwordModel.CurrentPassword" />
+                        </div>
+                        <div></div>
+                        <div class="account-field">
+                            <label for="newPassword">Mật khẩu mới <b>*</b></label>
+                            <InputText id="newPassword" type="password" class="account-input" @bind-Value="passwordModel.NewPassword" />
+                            <ValidationMessage For="() => passwordModel.NewPassword" />
+                        </div>
+                        <div class="account-field">
+                            <label for="confirmPassword">Xác nhận mật khẩu mới <b>*</b></label>
+                            <InputText id="confirmPassword" type="password" class="account-input" @bind-Value="passwordModel.ConfirmPassword" />
+                            <ValidationMessage For="() => passwordModel.ConfirmPassword" />
+                        </div>
+                    </div>
+                    <div class="password-hint">Mật khẩu nên có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và chữ số.</div>
+                </div>
+                <div class="account-form-footer">
+                    <button type="button" class="account-button secondary" @onclick="ClearPassword">Hủy</button>
+                    <button type="submit" class="account-button primary">Cập nhật mật khẩu</button>
+                </div>
+            </EditForm>
+        }
+        else
+        {
+            <div class="account-form-content security-content">
+                <div class="form-section-heading">
+                    <div><h3>Xác thực hai yếu tố (2FA)</h3><p>Tăng cường bảo mật bằng cách yêu cầu xác minh khi đăng nhập.</p></div>
+                </div>
+                <div class="security-option">
+                    <div class="security-option-icon">♢</div>
+                    <div class="security-option-copy">
+                        <strong>Xác thực hai yếu tố</strong>
+                        <p>@(twoFactorEnabled ? "Tài khoản đang bật xác thực hai yếu tố." : "Tài khoản chưa bật xác thực hai yếu tố.")</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" @bind="twoFactorEnabled" />
+                        <span></span>
+                    </label>
+                </div>
+                <div class="security-note">Lưu ý: Đây mới là trạng thái giao diện. Cần kết nối API xác thực để bật/tắt 2FA thực tế.</div>
+            </div>
+            <div class="account-form-footer">
+                <button type="button" class="account-button secondary" @onclick="ResetSecurity">Đặt lại</button>
+                <button type="button" class="account-button primary" @onclick="SaveSecurity">Lưu cài đặt</button>
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private string activeTab = "profile";
+    private string message = "";
+    private bool isError;
+    private bool twoFactorEnabled;
+    private bool originalTwoFactorEnabled;
+    private string lastUpdated = "14/11/2026";
+
+    private AdminProfile profile = new()
+    {
+        FullName = "Hoàng Nhật Minh",
+        EmployeeCode = "NV-0024",
+        Email = "minh.hoang@rento.vn",
+        Phone = "090 284 8294",
+        BirthDate = null,
+        Address = "Quận 1, TP. Hồ Chí Minh"
+    };
+
+    private AdminProfile originalProfile = new()
+    {
+        FullName = "Hoàng Nhật Minh",
+        EmployeeCode = "NV-0024",
+        Email = "minh.hoang@rento.vn",
+        Phone = "090 284 8294",
+        BirthDate = null,
+        Address = "Quận 1, TP. Hồ Chí Minh"
+    };
+
+    private PasswordForm passwordModel = new();
+
+    private void ChangeTab(string tab)
+    {
+        activeTab = tab;
+        message = "";
+    }
+
+    private void SaveProfile()
+    {
+        originalProfile = new AdminProfile
+        {
+            FullName = profile.FullName,
+            EmployeeCode = profile.EmployeeCode,
+            Email = profile.Email,
+            Phone = profile.Phone,
+            BirthDate = profile.BirthDate,
+            Address = profile.Address
+        };
+        lastUpdated = DateTime.Now.ToString("dd/MM/yyyy");
+        message = "Đã cập nhật thông tin trên giao diện. Dữ liệu chưa được lưu vào cơ sở dữ liệu.";
+        isError = false;
+    }
+
+    private void ResetProfile()
+    {
+        profile = new AdminProfile
+        {
+            FullName = originalProfile.FullName,
+            EmployeeCode = originalProfile.EmployeeCode,
+            Email = originalProfile.Email,
+            Phone = originalProfile.Phone,
+            BirthDate = originalProfile.BirthDate,
+            Address = originalProfile.Address
+        };
+        message = "";
+    }
+
+    private void ChangePassword()
+    {
+        if (passwordModel.NewPassword != passwordModel.ConfirmPassword)
+        {
+            message = "Mật khẩu mới và xác nhận mật khẩu không khớp.";
+            isError = true;
+            return;
+        }
+
+        message = "Form hợp lệ. Cần kết nối API backend để xác minh mật khẩu hiện tại và cập nhật mật khẩu.";
+        isError = false;
+        passwordModel = new PasswordForm();
+    }
+
+    private void ClearPassword()
+    {
+        passwordModel = new PasswordForm();
+        message = "";
+    }
+
+    private void SaveSecurity()
+    {
+        originalTwoFactorEnabled = twoFactorEnabled;
+        message = "Đã cập nhật trạng thái trên giao diện. Cần kết nối API để áp dụng 2FA thực tế.";
+        isError = false;
+    }
+
+    private void ResetSecurity()
+    {
+        twoFactorEnabled = originalTwoFactorEnabled;
+        message = "";
+    }
+
+    private sealed class AdminProfile
+    {
+        [Required(ErrorMessage = "Vui lòng nhập họ và tên.")]
+        public string FullName { get; set; } = "";
+
+        public string EmployeeCode { get; set; } = "";
+
+        [Required(ErrorMessage = "Vui lòng nhập email.")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
+        public string Email { get; set; } = "";
+
+        public string Phone { get; set; } = "";
+        public DateTime? BirthDate { get; set; }
+
+        public string Address { get; set; } = "";
+    }
+
+    private sealed class PasswordForm
+    {
+        [Required(ErrorMessage = "Vui lòng nhập mật khẩu hiện tại.")]
+        public string CurrentPassword { get; set; } = "";
+
+        [Required(ErrorMessage = "Vui lòng nhập mật khẩu mới.")]
+        [MinLength(8, ErrorMessage = "Mật khẩu mới phải có ít nhất 8 ký tự.")]
+        public string NewPassword { get; set; } = "";
+
+        [Required(ErrorMessage = "Vui lòng xác nhận mật khẩu mới.")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}

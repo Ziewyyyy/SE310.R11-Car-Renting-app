@@ -1,0 +1,400 @@
+
+@page "/admin/contracts"
+@layout AdminLayout
+
+<PageTitle>Trả xe & Hợp đồng | RENTO</PageTitle>
+
+<div class="return-page">
+    <div class="return-heading">
+        <div>
+            <div class="return-eyebrow">TRẢ XE & HỢP ĐỒNG</div>
+            <h1>@(activeTab == "inspection" ? "Kiểm tra trả xe" : "Hợp đồng thuê")</h1>
+            <p>
+                @(activeTab == "inspection"
+                    ? "Ghi nhận tình trạng xe và quyết toán tiền đặt cọc."
+                    : "Theo dõi thông tin và trạng thái hợp đồng thuê xe.")
+            </p>
+        </div>
+    </div>
+
+    <div class="return-tabs">
+        <button class="return-tab @(activeTab == "inspection" ? "active" : "")"
+                @onclick='() => ChangeTab("inspection")'>
+            Kiểm tra trả xe
+        </button>
+
+        <button class="return-tab @(activeTab == "contract" ? "active" : "")"
+                @onclick='() => ChangeTab("contract")'>
+            Hợp đồng thuê
+        </button>
+    </div>
+
+    @if (activeTab == "inspection")
+    {
+        <div class="return-layout">
+            <div class="return-main">
+
+                <section class="return-card return-order-info">
+                    <div class="return-order-left">
+                        <span class="return-muted-label">ĐƠN THUÊ</span>
+                        <strong class="return-order-code">RE-240727</strong>
+                        <span class="return-status renting">● Đang thuê</span>
+                    </div>
+
+                    <div class="return-order-right">
+                        <div>
+                            <span>Khách hàng</span>
+                            <strong>Trần Hoàng Nam</strong>
+                        </div>
+                        <div>
+                            <span>Thời gian thuê</span>
+                            <strong>27/07 – 30/07/2025</strong>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="return-card">
+                    <div class="return-section-heading">
+                        <h3>Thông tin phương tiện</h3>
+                        <span>VinFast VF 8 Plus · 30K-218.46</span>
+                    </div>
+
+                    <div class="return-car-info">
+                        <div class="return-car-image">
+                            <span>VF 8</span>
+                        </div>
+                        <div>
+                            <strong>VinFast VF 8 Plus</strong>
+                            <p>SUV điện · Màu xanh · Năm 2024</p>
+                            <p>Đã nhận xe: 27/07/2025 lúc 08:00</p>
+                        </div>
+                    </div>
+
+                    <div class="return-input-grid three-columns">
+                        <div class="return-field">
+                            <label>Số km trước thuê</label>
+                            <input value="18.420 km" readonly />
+                        </div>
+
+                        <div class="return-field">
+                            <label>Số km sau trả <span class="required">*</span></label>
+                            <input type="number"
+                                   min="0"
+                                   placeholder="Nhập số km hiện tại"
+                                   @bind="currentKm" />
+                        </div>
+
+                        <div class="return-field">
+                            <label>Mức nhiên liệu / pin</label>
+                            <select @bind="batteryLevel">
+                                <option value="100%">100% pin</option>
+                                <option value="75%">75% pin</option>
+                                <option value="50%">50% pin</option>
+                                <option value="25%">25% pin</option>
+                                <option value="0%">0% pin</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="return-card">
+                    <div class="return-section-heading">
+                        <h3>Kiểm tra tình trạng xe</h3>
+                        <button class="return-text-btn" @onclick="ToggleAllChecks">
+                            @(allChecked ? "Bỏ chọn tất cả" : "Đánh dấu tất cả hạng mục đã kiểm tra")
+                        </button>
+                    </div>
+
+                    <div class="return-check-grid">
+                        @foreach (var item in inspectionItems)
+                        {
+                            <label class="return-check-item">
+                                <input type="checkbox" @bind="item.Checked" />
+                                <span class="return-custom-check"></span>
+                                <span class="return-check-text">
+                                    <strong>@item.Name</strong>
+                                    <small>@(item.Checked ? "Tình trạng tốt" : "Chưa kiểm tra")</small>
+                                </span>
+                            </label>
+                        }
+                    </div>
+
+                    <div class="return-field return-notes-field">
+                        <label>Ghi chú hư hỏng</label>
+                        <textarea rows="3"
+                                  placeholder="Mô tả chi tiết vị trí và mức độ hư hỏng nếu có..."
+                                  @bind="damageNote"></textarea>
+                    </div>
+                </section>
+
+                <section class="return-card">
+                    <div class="return-section-heading">
+                        <h3>Ảnh kiểm tra sau thuê</h3>
+                        <span>JPG/PNG · Tối đa 5 MB</span>
+                    </div>
+
+                    <div class="return-photo-grid">
+                        <div class="return-photo-preview">
+                            <div class="return-photo-placeholder">Ảnh xe đã kiểm tra</div>
+                            <span>Ảnh phía trước</span>
+                        </div>
+
+                        @foreach (var photoName in new[] { "Bên sau", "Bên trái", "Bên phải" })
+                        {
+                            <label class="return-upload-box">
+                                <span>＋</span>
+                                <strong>@photoName</strong>
+                                <InputFile accept="image/png,image/jpeg"
+                                           OnChange="e => AddPhoto(e, photoName)" />
+                                @if (uploadedPhotos.ContainsKey(photoName))
+                                {
+                                    <small>@uploadedPhotos[photoName]</small>
+                                }
+                                else
+                                {
+                                    <small>Tải ảnh lên</small>
+                                }
+                            </label>
+                        }
+                    </div>
+                </section>
+            </div>
+
+            <aside class="return-settlement">
+                <h3>Quyết toán trả xe</h3>
+
+                <div class="return-settlement-field">
+                    <label>Phí trả muộn</label>
+                    <div class="return-money-input">
+                        <input type="number" min="0" @bind="lateFee" />
+                        <span>đ</span>
+                    </div>
+                    <small>Trễ 2 giờ · 250.000 đ/giờ</small>
+                </div>
+
+                <div class="return-settlement-field">
+                    <label>Phí hư hỏng</label>
+                    <div class="return-money-input">
+                        <input type="number" min="0" @bind="damageFee" />
+                        <span>đ</span>
+                    </div>
+                    <small>Nhập theo biên bản kiểm tra</small>
+                </div>
+
+                <div class="return-settlement-breakdown">
+                    <div>
+                        <span>Tiền đặt cọc</span>
+                        <strong>@deposit.ToString("N0") đ</strong>
+                    </div>
+                    <div>
+                        <span>Phí trả muộn</span>
+                        <strong class="negative">- @lateFee.ToString("N0") đ</strong>
+                    </div>
+                    <div>
+                        <span>Phí hư hỏng</span>
+                        <strong class="negative">- @damageFee.ToString("N0") đ</strong>
+                    </div>
+                    <div class="return-deduction">
+                        <span>Khoản khấu trừ</span>
+                        <strong>@totalDeduction.ToString("N0") đ</strong>
+                    </div>
+                </div>
+
+                <div class="return-refund">
+                    <span>Hoàn trả khách hàng</span>
+                    <strong>@refundAmount.ToString("N0") đ</strong>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(settlementMessage))
+                {
+                    <div class="return-settlement-message">@settlementMessage</div>
+                }
+
+                <button class="return-complete-btn" @onclick="CompleteReturn">
+                    Hoàn tất trả xe
+                </button>
+
+                <small class="return-settlement-note">
+                    Thao tác sẽ kết thúc đơn thuê và cập nhật trạng thái xe.
+                </small>
+            </aside>
+        </div>
+    }
+    else
+    {
+        <section class="return-card contract-card">
+            <div class="return-section-heading">
+                <h3>Danh sách hợp đồng thuê</h3>
+                <span>Quản lý hợp đồng trong hệ thống</span>
+            </div>
+
+            <div class="contract-toolbar">
+                <input placeholder="Tìm mã hợp đồng, khách hàng..."
+                       @bind="contractSearch"
+                       @bind:event="oninput" />
+
+                <select @bind="contractStatus">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="Đang hiệu lực">Đang hiệu lực</option>
+                    <option value="Đã hoàn thành">Đã hoàn thành</option>
+                    <option value="Đã hủy">Đã hủy</option>
+                </select>
+            </div>
+
+            <div class="return-table-wrapper">
+                <table class="return-contract-table">
+                    <thead>
+                        <tr>
+                            <th>MÃ HỢP ĐỒNG</th>
+                            <th>KHÁCH HÀNG</th>
+                            <th>XE THUÊ</th>
+                            <th>NGÀY BẮT ĐẦU</th>
+                            <th>NGÀY KẾT THÚC</th>
+                            <th>TRẠNG THÁI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var contract in filteredContracts)
+                        {
+                            <tr>
+                                <td class="contract-code">@contract.Code</td>
+                                <td>@contract.Customer</td>
+                                <td>@contract.Car</td>
+                                <td>@contract.StartDate</td>
+                                <td>@contract.EndDate</td>
+                                <td>
+                                    <span class="contract-status">@contract.Status</span>
+                                </td>
+                            </tr>
+                        }
+
+                        @if (!filteredContracts.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="contract-empty">
+                                    Không tìm thấy hợp đồng.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private string activeTab = "inspection";
+
+    private int currentKm;
+    private string batteryLevel = "100%";
+    private string damageNote = "";
+
+    private decimal deposit = 2000000;
+    private decimal lateFee = 500000;
+    private decimal damageFee = 0;
+
+    private string settlementMessage = "";
+
+    private decimal totalDeduction => lateFee + damageFee;
+    private decimal refundAmount => Math.Max(0, deposit - totalDeduction);
+
+    private string contractSearch = "";
+    private string contractStatus = "";
+
+    private Dictionary<string, string> uploadedPhotos = new();
+
+    private List<InspectionItem> inspectionItems = new()
+    {
+        new() { Name = "Ngoại thất", Checked = true },
+        new() { Name = "Nội thất", Checked = true },
+        new() { Name = "Lốp xe", Checked = true },
+        new() { Name = "Đèn & tín hiệu", Checked = true },
+        new() { Name = "Gương & kính", Checked = false },
+        new() { Name = "Giấy tờ xe", Checked = false }
+    };
+
+    private bool allChecked => inspectionItems.All(x => x.Checked);
+
+    private List<ContractItem> contracts = new()
+    {
+        new() { Code = "HD-240727", Customer = "Trần Hoàng Nam", Car = "VinFast VF 8 Plus", StartDate = "27/07/2025", EndDate = "30/07/2025", Status = "Đang hiệu lực" },
+        new() { Code = "HD-240726", Customer = "Lê Thanh Huyền", Car = "Mazda CX-5 Premium", StartDate = "25/07/2025", EndDate = "28/07/2025", Status = "Đã hoàn thành" },
+        new() { Code = "HD-240725", Customer = "Phạm Đức Long", Car = "Toyota Camry 2.5Q", StartDate = "24/07/2025", EndDate = "29/07/2025", Status = "Đã hủy" },
+        new() { Code = "HD-240724", Customer = "Đỗ Khánh Linh", Car = "Tesla Model 3", StartDate = "23/07/2025", EndDate = "27/07/2025", Status = "Đã hoàn thành" }
+    };
+
+    private IEnumerable<ContractItem> filteredContracts =>
+        contracts.Where(x =>
+            (string.IsNullOrWhiteSpace(contractSearch) ||
+             x.Code.Contains(contractSearch, StringComparison.OrdinalIgnoreCase) ||
+             x.Customer.Contains(contractSearch, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(contractStatus) || x.Status == contractStatus));
+
+    private void ChangeTab(string tab)
+    {
+        activeTab = tab;
+    }
+
+    private void ToggleAllChecks()
+    {
+        var newValue = !allChecked;
+
+        foreach (var item in inspectionItems)
+        {
+            item.Checked = newValue;
+        }
+    }
+
+    private void AddPhoto(InputFileChangeEventArgs e, string photoName)
+    {
+        var file = e.File;
+
+        if (file.Size > 5 * 1024 * 1024)
+        {
+            uploadedPhotos[photoName] = "Ảnh vượt quá 5 MB";
+            return;
+        }
+
+        uploadedPhotos[photoName] = file.Name;
+    }
+
+    private void CompleteReturn()
+    {
+        if (currentKm <= 0)
+        {
+            settlementMessage = "Vui lòng nhập số km sau khi trả xe.";
+            return;
+        }
+
+        if (inspectionItems.Any(x => !x.Checked))
+        {
+            settlementMessage = "Vui lòng kiểm tra đầy đủ các hạng mục xe.";
+            return;
+        }
+
+        if (totalDeduction > deposit)
+        {
+            settlementMessage = "Khoản khấu trừ lớn hơn tiền đặt cọc. Vui lòng kiểm tra lại.";
+            return;
+        }
+
+        settlementMessage = "Đã ghi nhận hoàn tất trả xe (dữ liệu mẫu).";
+    }
+
+    private class InspectionItem
+    {
+        public string Name { get; set; } = "";
+        public bool Checked { get; set; }
+    }
+
+    private class ContractItem
+    {
+        public string Code { get; set; } = "";
+        public string Customer { get; set; } = "";
+        public string Car { get; set; } = "";
+        public string StartDate { get; set; } = "";
+        public string EndDate { get; set; } = "";
+        public string Status { get; set; } = "";
+    }
+}

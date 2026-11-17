@@ -1,9 +1,9 @@
-
-@page "/support"
+@page "/user/support"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.Forms
 @using CarRentalFE.Components.Layout
 @layout EmptyLayout
+@inject NavigationManager Navigation
 
 <PageTitle>Trung tâm hỗ trợ - RENTO</PageTitle>
 
@@ -42,14 +42,14 @@
             </div>
 
             <nav class="sidebar-menu">
-                <a href="/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
-                <a href="/profile">🚘 &nbsp; Đơn thuê của tôi</a>
-                <a href="/contracts">▤ &nbsp; Hợp đồng</a>
-                <a href="/payments">▣ &nbsp; Thanh toán</a>
-                <a href="/reviews">☆ &nbsp; Đánh giá của tôi</a>
-                <a href="/support" class="active">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
-                <a href="/notifications">♧ &nbsp; Thông báo</a>
-                <a href="/account-info">♙ &nbsp; Thông tin cá nhân</a>
+                <a href="/user/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
+                <a href="/user/profile">🚘 &nbsp; Đơn thuê của tôi</a>
+                <a href="/user/contracts">▤ &nbsp; Hợp đồng</a>
+                <a href="/user/payments">▣ &nbsp; Thanh toán</a>
+                <a href="/user/reviews">☆ &nbsp; Đánh giá của tôi</a>
+                <a href="/user/support" class="active">ⓘ &nbsp; Yêu cầu hỗ trợ</a>
+                <a href="/user/notifications">♧ &nbsp; Thông báo</a>
+                <a href="/user/account-info">♙ &nbsp; Thông tin cá nhân</a>
             </nav>
 
             <a href="/login" class="sidebar-logout">
@@ -74,9 +74,7 @@
                             var faq = FaqList[index];
 
                             <div class="support-faq-item">
-                                <button type="button"
-                                        class="support-faq-question"
-                                        @onclick="() => ToggleFaq(index)">
+                                <button type="button" class="support-faq-question" @onclick="() => ToggleFaq(index)">
                                     <span>@faq.Question</span>
                                     <span>@(OpenFaqIndex == index ? "⌃" : "⌄")</span>
                                 </button>
@@ -113,9 +111,7 @@
 
                     <div class="support-field">
                         <label>Chủ đề *</label>
-                        <input placeholder="Bạn cần hỗ trợ về vấn đề gì?"
-                               @bind="Subject"
-                               @bind:event="oninput" />
+                        <input placeholder="Bạn cần hỗ trợ về vấn đề gì?" @bind="Subject" @bind:event="oninput" />
                     </div>
 
                     <div class="support-field">
@@ -133,16 +129,13 @@
 
                     <div class="support-field">
                         <label>Nội dung *</label>
-                        <textarea rows="6"
-                                  placeholder="Mô tả chi tiết vấn đề của bạn..."
-                                  @bind="Description"
-                                  @bind:event="oninput"></textarea>
+                        <textarea rows="6" placeholder="Mô tả chi tiết vấn đề của bạn..." @bind="Description"
+                            @bind:event="oninput"></textarea>
                     </div>
 
                     <div class="support-upload">
                         <label for="support-file">▤ &nbsp; Đính kèm tệp</label>
-                        <InputFile id="support-file"
-                                   OnChange="OnFileSelected" />
+                        <InputFile id="support-file" OnChange="OnFileSelected" />
                         @if (!string.IsNullOrEmpty(SelectedFileName))
                         {
                             <small>@SelectedFileName</small>
@@ -154,9 +147,7 @@
                         <p class="support-form-message">@FormMessage</p>
                     }
 
-                    <button type="button"
-                            class="support-submit"
-                            @onclick="SubmitTicket">
+                    <button type="button" class="support-submit" @onclick="SubmitTicket">
                         Gửi yêu cầu hỗ trợ
                     </button>
                 </section>
@@ -175,48 +166,48 @@
     private string FormMessage = "";
 
     private readonly List<FaqItem> FaqList = new()
-    {
-        new()
-        {
-            Question = "Tôi cần giấy tờ gì để thuê xe?",
-            Answer = "Bạn cần giấy phép lái xe hợp lệ và giấy tờ tùy thân theo yêu cầu xác minh của RENTO."
-        },
-        new()
-        {
-            Question = "Khoản đặt cọc được hoàn khi nào?",
-            Answer = "Khoản đặt cọc được xử lý hoàn sau khi kết thúc chuyến đi, kiểm tra tình trạng xe và đối chiếu các khoản phát sinh."
-        },
-        new()
-        {
-            Question = "Làm thế nào để gia hạn chuyến đi?",
-            Answer = "Bạn có thể liên hệ bộ phận hỗ trợ để yêu cầu gia hạn. Việc gia hạn phụ thuộc vào lịch trống của xe."
-        },
-        new()
-        {
-            Question = "Chính sách hủy đơn như thế nào?",
-            Answer = "Điều kiện hủy và hoàn tiền phụ thuộc vào hợp đồng và chính sách áp dụng cho đơn thuê của bạn."
-        }
-    };
+{
+new()
+{
+Question = "Tôi cần giấy tờ gì để thuê xe?",
+Answer = "Bạn cần giấy phép lái xe hợp lệ và giấy tờ tùy thân theo yêu cầu xác minh của RENTO."
+},
+new()
+{
+Question = "Khoản đặt cọc được hoàn khi nào?",
+Answer = "Khoản đặt cọc được xử lý hoàn sau khi kết thúc chuyến đi, kiểm tra tình trạng xe và đối chiếu các khoản phát sinh."
+},
+new()
+{
+Question = "Làm thế nào để gia hạn chuyến đi?",
+Answer = "Bạn có thể liên hệ bộ phận hỗ trợ để yêu cầu gia hạn. Việc gia hạn phụ thuộc vào lịch trống của xe."
+},
+new()
+{
+Question = "Chính sách hủy đơn như thế nào?",
+Answer = "Điều kiện hủy và hoàn tiền phụ thuộc vào hợp đồng và chính sách áp dụng cho đơn thuê của bạn."
+}
+};
 
     private List<TicketItem> TicketList = new()
-    {
-        new()
-        {
-            Id = "#SP-0184",
-            Subject = "Thay đổi giờ nhận xe",
-            Status = "Đang xử lý",
-            StatusClass = "processing",
-            UpdatedAt = "Cập nhật 20 phút trước"
-        },
-        new()
-        {
-            Id = "#SP-0156",
-            Subject = "Hoàn tiền đặt cọc",
-            Status = "Đã giải quyết",
-            StatusClass = "resolved",
-            UpdatedAt = "18/05/2025"
-        }
-    };
+{
+new()
+{
+Id = "#SP-0184",
+Subject = "Thay đổi giờ nhận xe",
+Status = "Đang xử lý",
+StatusClass = "processing",
+UpdatedAt = "Cập nhật 20 phút trước"
+},
+new()
+{
+Id = "#SP-0156",
+Subject = "Hoàn tiền đặt cọc",
+Status = "Đã giải quyết",
+StatusClass = "resolved",
+UpdatedAt = "18/05/2025"
+}
+};
 
     private void ToggleFaq(int index)
     {
@@ -231,8 +222,8 @@
     private void SubmitTicket()
     {
         if (string.IsNullOrWhiteSpace(Subject) ||
-            string.IsNullOrWhiteSpace(Category) ||
-            string.IsNullOrWhiteSpace(Description))
+        string.IsNullOrWhiteSpace(Category) ||
+        string.IsNullOrWhiteSpace(Description))
         {
             FormMessage = "Vui lòng nhập đầy đủ chủ đề, danh mục và nội dung.";
             return;
@@ -267,5 +258,10 @@
         public string Status { get; set; } = "";
         public string StatusClass { get; set; } = "";
         public string UpdatedAt { get; set; } = "";
+    }
+
+    private void Logout()
+    {
+        Navigation.NavigateTo("/login");
     }
 }

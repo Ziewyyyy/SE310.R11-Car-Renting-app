@@ -6,7 +6,8 @@
 
 @using CarRentalFE.Services
 @inject AuthService AuthService
-
+@inject CarApiService Api
+@inject IConfiguration Configuration
 @inject NavigationManager Navigation
 
 <PageTitle>Đơn thuê của tôi - RENTO</PageTitle>
@@ -68,8 +69,8 @@
             </p>
 
             <div class="rento-stats">
-                <div class="stat-card">
-                    <span class="stat-icon">
+                <div class="user-stat-card">
+                    <span class="user-stat-icon">
                         <svg viewBox="0 0 24 24">
                             <rect x="5" y="3" width="14" height="18" rx="2" />
                             <path d="M8 8h8M8 12h8M8 16h5" />
@@ -77,12 +78,12 @@
                     </span>
                     <div>
                         <small>Tổng đơn thuê</small>
-                        <strong>08</strong>
+                        <strong>@Bookings.Count.ToString("00")</strong>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <span class="stat-icon">
+                <div class="user-stat-card">
+                    <span class="user-stat-icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M3 13l2-6h14l2 6" />
                             <path d="M3 13h18v5H3z" />
@@ -93,12 +94,12 @@
                     </span>
                     <div>
                         <small>Đang thuê</small>
-                        <strong>01</strong>
+                        <strong>@Bookings.Count(b => b.Status == "Đang thuê").ToString("00")</strong>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <span class="stat-icon">
+                <div class="user-stat-card">
+                    <span class="user-stat-icon">
                         <svg viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="9" />
                             <path d="M12 7v5l3 2" />
@@ -106,12 +107,12 @@
                     </span>
                     <div>
                         <small>Chờ xác nhận</small>
-                        <strong>01</strong>
+                        <strong>@Bookings.Count(b => b.Status == "Chờ xác nhận").ToString("00")</strong>
                     </div>
                 </div>
 
-                <div class="stat-card">
-                    <span class="stat-icon">
+                <div class="user-stat-card">
+                    <span class="user-stat-icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M3 17l6-6 4 4 8-9" />
                             <path d="M15 6h6v6" />
@@ -123,6 +124,13 @@
                         <strong>2.840 km</strong>
                     </div>
                 </div>
+            </div>
+
+            <div class="rento-tabs">
+                @foreach (var tab in StatusTabs)
+                {
+                    <button class="@(SelectedStatus == tab ? "active" : "")" @onclick="() => SelectStatus(tab)">@tab</button>
+                }
             </div>
 
             <div class="rento-toolbar">
@@ -148,10 +156,26 @@
             }
 
             <div class="booking-list">
+                @if (loading)
+                {
+                    <div class="empty-bookings">Đang tải đơn thuê...</div>
+                }
+                else if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="empty-bookings">@error</div>
+                }
+
                 @foreach (var booking in FilteredBookings)
                 {
                     <div class="booking-card">
-                        <img src="@booking.Image" alt="@booking.CarName" />
+                        @if (!string.IsNullOrWhiteSpace(booking.Image))
+                        {
+                            <img src="@booking.Image" alt="@booking.CarName" />
+                        }
+                        else
+                        {
+                            <div class="no-image">🚘</div>
+                        }
 
                         <div class="booking-info">
                             <div class="booking-meta">
@@ -175,7 +199,7 @@
                     </div>
                 }
 
-                @if (!FilteredBookings.Any())
+                @if (!loading && string.IsNullOrEmpty(error) && !FilteredBookings.Any())
                 {
                     <div class="empty-bookings">
                         Không tìm thấy đơn thuê phù hợp.
@@ -209,73 +233,92 @@
     private DateTime? ToDate;
     private BookingItem? SelectedBooking;
 
+    private bool loading = true;
+    private string? error;
+    private List<BookingItem> Bookings = new();
+
     private readonly string[] StatusTabs =
     {
-"Tất cả", "Chờ xác nhận", "Sắp nhận xe",
-"Đang thuê", "Hoàn thành", "Đã hủy"
-};
+        "Tất cả", "Chờ xác nhận", "Sắp nhận xe",
+        "Đang thuê", "Hoàn thành", "Đã hủy"
+    };
 
-    private readonly List<BookingItem> Bookings = new()
-{
-new()
-{
-Id = "#RT250622-0186",
-CarId = "bmw-430i",
-CarName = "BMW 430i M Sport",
-DateText = "22/06 – 25/06/2025",
-StartDate = new DateTime(2025, 6, 22),
-Price = 22700000,
-Status = "Chờ xác nhận",
-StatusClass = "pending",
-Image = "https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400"
-},
-new()
-{
-Id = "#RT250515-0094",
-CarId = "audi-q7",
-CarName = "Audi Q7 Premium",
-DateText = "15/05 – 18/05/2025",
-StartDate = new DateTime(2025, 5, 15),
-Price = 11250000,
-Status = "Hoàn thành",
-StatusClass = "completed",
-Image = "https://images.unsplash.com/photo-1541348263662-e068662d82af?w=400"
-},
-new()
-{
-Id = "#RT250402-0041",
-CarId = "porsche-panamera",
-CarName = "Porsche Panamera 4S",
-DateText = "02/04 – 04/04/2025",
-StartDate = new DateTime(2025, 4, 2),
-Price = 10100000,
-Status = "Đã hủy",
-StatusClass = "cancelled",
-Image = "https://images.unsplash.com/photo-1601929862217-f1bf94503333?w=400"
-}
-};
-
-    private IEnumerable<BookingItem> FilteredBookings =>
-    Bookings.Where(b =>
-    (SelectedStatus == "Tất cả" || b.Status == SelectedStatus)
-    && (string.IsNullOrWhiteSpace(SearchText)
-    || b.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
-    || b.CarName.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
-    && (!FromDate.HasValue || b.StartDate.Date >= FromDate.Value.Date)
-    && (!ToDate.HasValue || b.StartDate.Date <= ToDate.Value.Date));
-
-    private void SelectStatus(string status) => SelectedStatus = status;
-
-    private void ToggleDateFilter() => ShowDateFilter = !ShowDateFilter;
-
-    private void ClearDates()
+    // ProtectedLocalStorage chỉ dùng được sau khi render xong
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        FromDate = null;
-        ToDate = null;
+        if (!firstRender) return;
+        await LoadBookingsAsync();
+        loading = false;
+        StateHasChanged();
     }
 
-    private void ShowBooking(BookingItem booking) => SelectedBooking = booking;
+    private async Task LoadBookingsAsync()
+    {
+        try
+        {
+            var customerId = await AuthService.GetCurrentUserIdAsync();
+            if (customerId == null)
+            {
+                Navigation.NavigateTo("/login", forceLoad: true);
+                return;
+            }
 
+            var data = await Api.GetMyBookingsAsync(customerId.Value);
+            Bookings = data.Select(b =>
+            {
+                var (text, css) = StatusInfo(b.Status);
+                return new BookingItem
+                {
+                    Id = "#" + b.Id.ToString("N")[..8].ToUpper(),
+                    CarId = b.CarId.ToString(),
+                    CarName = b.CarName,
+                    DateText = $"{b.PickupDate:dd/MM/yyyy} – {b.ReturnDate:dd/MM/yyyy}",
+                    StartDate = b.PickupDate,
+                    Price = b.TotalAmount,
+                    Status = text,
+                    StatusClass = css,
+                    Image = ImageUrl(b.PrimaryImage)
+                };
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            error = "Không tải được đơn thuê: " + ex.Message;
+        }
+    }
+
+    private static (string Text, string Css) StatusInfo(string s) => s switch
+    {
+        "Pending" => ("Chờ xác nhận", "pending"),
+        "Confirmed" => ("Sắp nhận xe", "upcoming"),
+        "Active" or "Renting" or "InProgress" => ("Đang thuê", "renting"),
+        "Completed" => ("Hoàn thành", "completed"),
+        "Cancelled" => ("Đã hủy", "cancelled"),
+        _ => (s, "")
+    };
+
+    private string ImageUrl(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return "";
+        if (path.StartsWith("data:")) return path;               // ảnh lưu dạng base64
+        if (Uri.TryCreate(path, UriKind.Absolute, out var abs)) return abs.ToString();
+        var baseUrl = Configuration["Api:BaseUrl"] ?? "http://localhost:5110/";
+        return new Uri(new Uri(baseUrl), path.TrimStart('/')).ToString();
+    }
+
+    private IEnumerable<BookingItem> FilteredBookings =>
+        Bookings.Where(b =>
+            (SelectedStatus == "Tất cả" || b.Status == SelectedStatus)
+            && (string.IsNullOrWhiteSpace(SearchText)
+                || b.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase)
+                || b.CarName.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+            && (!FromDate.HasValue || b.StartDate.Date >= FromDate.Value.Date)
+            && (!ToDate.HasValue || b.StartDate.Date <= ToDate.Value.Date));
+
+    private void SelectStatus(string status) => SelectedStatus = status;
+    private void ToggleDateFilter() => ShowDateFilter = !ShowDateFilter;
+    private void ClearDates() { FromDate = null; ToDate = null; }
+    private void ShowBooking(BookingItem booking) => SelectedBooking = booking;
     private void CloseBooking() => SelectedBooking = null;
 
     private class BookingItem

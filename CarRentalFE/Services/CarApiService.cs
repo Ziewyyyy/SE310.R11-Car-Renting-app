@@ -11,6 +11,18 @@ public class CarApiService
     private readonly HttpClient _http;
     public CarApiService(HttpClient http) => _http = http;
 
+
+    public async Task<(bool Ok, string? Error, BookingCreated? Booking)> CreateBookingAsync(BookingCreateRequest r)
+    {
+        using var res = await _http.PostAsJsonAsync("bookings", r);
+        if (res.IsSuccessStatusCode)
+            return (true, null, await res.Content.ReadFromJsonAsync<BookingCreated>());
+        return (false, await ReadErrorAsync(res), null);
+    }
+
+    public async Task<List<MyBookingItem>> GetMyBookingsAsync(Guid customerId) =>
+    await _http.GetFromJsonAsync<List<MyBookingItem>>($"bookings/my?customerId={customerId}") ?? new();
+
     // ---------- Xe ----------
     public async Task<PagedResult<CarListItem>> GetCarsAsync(CarQuery q)
     {
@@ -90,3 +102,11 @@ public class CarApiService
     private class ApiError { public string? Message { get; set; } }
     private class CreatedResult { public Guid Id { get; set; } }
 }
+
+public record BookingCreateRequest(Guid CustomerId, Guid CarId, DateTime PickupDate, DateTime ReturnDate);
+public record BookingCreated(Guid Id, decimal TotalAmount, string Status);
+
+public record MyBookingItem(
+    Guid Id, DateTime PickupDate, DateTime ReturnDate, decimal TotalAmount,
+    string Status, DateTime CreatedAt, Guid CarId, string CarName,
+    string? LicensePlate, string? PrimaryImage);

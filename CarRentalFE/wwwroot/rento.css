@@ -186,7 +186,7 @@ body {
     margin-bottom: 30px;
 }
 
-.stat-card {
+.user-stat-card {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -197,7 +197,7 @@ body {
     min-height: 68px;
 }
 
-.stat-icon {
+.user-stat-card {
     width: 44px;
     height: 44px;
     min-width: 44px;
@@ -219,7 +219,7 @@ body {
     stroke-linejoin: round;
 }
 
-.stat-card strong {
+.user-stat-card strong {
     display: block;
     color: #08c9e8;
     font-size: 21px;
@@ -227,7 +227,7 @@ body {
     margin-top: 6px;
 }
 
-.stat-card small {
+.user-stat-card small {
     color: #9eb3c5;
     font-size: 12px;
 }
@@ -415,9 +415,32 @@ body {
 
 .rento-modal {
     background: white;
+    color: #071525;
     padding: 28px;
     border-radius: 12px;
     width: min(420px, 90vw);
+}
+
+.rento-modal h2,
+.rento-modal h3,
+.rento-modal p,
+.rento-modal b,
+.rento-modal strong,
+.rento-modal span {
+    color: #071525;
+    opacity: 1;
+    filter: none;
+    text-shadow: none;
+}
+
+.rento-modal h2 {
+    margin: 0 0 16px;
+    font-size: 22px;
+}
+
+.rento-modal p {
+    margin: 0 0 10px;
+    font-size: 14px;
 }
 
 .rento-modal button {

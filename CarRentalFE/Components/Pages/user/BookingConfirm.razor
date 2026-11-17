@@ -41,9 +41,7 @@
         }
         else if (response?.Car != null)
         {
-            <EditForm Model="@model"
-                      OnValidSubmit="@Submit"
-                      class="bk-grid">
+            <EditForm Model="@model" OnValidSubmit="@Submit" class="bk-grid">
 
                 <DataAnnotationsValidator />
 
@@ -61,39 +59,28 @@
 
                             <div class="bk-field">
                                 <label>Họ và tên *</label>
-                                <InputText class="bk-input"
-                                           @bind-Value="model.FullName"
-                                           placeholder="Nhập họ và tên" />
+                                <InputText class="bk-input" @bind-Value="model.FullName" placeholder="Nhập họ và tên" />
 
-                                <ValidationMessage For="@(() => model.FullName)"
-                                                   class="bk-error" />
+                                <ValidationMessage For="@(() => model.FullName)" class="bk-error" />
                             </div>
 
                             <div class="bk-field">
                                 <label>Số điện thoại *</label>
-                                <InputText class="bk-input"
-                                           @bind-Value="model.Phone"
-                                           placeholder="Nhập số điện thoại" />
+                                <InputText class="bk-input" @bind-Value="model.Phone" placeholder="Nhập số điện thoại" />
 
-                                <ValidationMessage For="@(() => model.Phone)"
-                                                   class="bk-error" />
+                                <ValidationMessage For="@(() => model.Phone)" class="bk-error" />
                             </div>
 
                             <div class="bk-field">
                                 <label>Email *</label>
-                                <InputText class="bk-input"
-                                           @bind-Value="model.Email"
-                                           placeholder="Nhập email" />
+                                <InputText class="bk-input" @bind-Value="model.Email" placeholder="Nhập email" />
 
-                                <ValidationMessage For="@(() => model.Email)"
-                                                   class="bk-error" />
+                                <ValidationMessage For="@(() => model.Email)" class="bk-error" />
                             </div>
 
                             <div class="bk-field">
                                 <label>Địa chỉ</label>
-                                <InputText class="bk-input"
-                                           @bind-Value="model.Address"
-                                           placeholder="Nhập địa chỉ" />
+                                <InputText class="bk-input" @bind-Value="model.Address" placeholder="Nhập địa chỉ" />
                             </div>
 
                         </div>
@@ -113,8 +100,8 @@
                             <div class="bk-upload-text">
                                 <strong>
                                     @(string.IsNullOrEmpty(licenseName)
-                                        ? "Tải lên giấy phép lái xe"
-                                        : licenseName)
+                                                                    ? "Tải lên giấy phép lái xe"
+                                                                    : licenseName)
                                 </strong>
 
                                 <small>PNG, JPG hoặc PDF, tối đa 5MB</small>
@@ -122,9 +109,7 @@
 
                             <label class="bk-upload-btn">
                                 Chọn tệp
-                                <InputFile OnChange="OnLicenseSelected"
-                                           accept=".png,.jpg,.jpeg,.pdf"
-                                           hidden />
+                                <InputFile OnChange="OnLicenseSelected" accept=".png,.jpg,.jpeg,.pdf" hidden />
                             </label>
 
                         </div>
@@ -146,10 +131,8 @@
 
                             <label class="bk-pay @(payment == "card" ? "selected" : "")">
 
-                                <input type="radio"
-                                       name="payment"
-                                       checked="@(payment == "card")"
-                                       @onchange="@(() => payment = "card")" />
+                                <input type="radio" name="payment" checked="@(payment == "card")"
+                                    @onchange="@(() => payment = "card")" />
 
                                 <span class="bk-pay-icon">💳</span>
 
@@ -162,10 +145,8 @@
 
                             <label class="bk-pay @(payment == "momo" ? "selected" : "")">
 
-                                <input type="radio"
-                                       name="payment"
-                                       checked="@(payment == "momo")"
-                                       @onchange="@(() => payment = "momo")" />
+                                <input type="radio" name="payment" checked="@(payment == "momo")"
+                                    @onchange="@(() => payment = "momo")" />
 
                                 <span class="bk-pay-icon momo">M</span>
 
@@ -187,9 +168,7 @@
                     <!-- THÔNG TIN XE -->
                     <div class="bk-car">
 
-                        <img src="@CarImage"
-                             alt="@CarName"
-                             onerror="this.src='/images/no-car.png'" />
+                        <img src="@CarImage" alt="@CarName" onerror="this.src='/images/no-car.png'" />
 
                         <div>
                             <span class="bk-badge">@CarStatusText</span>
@@ -272,17 +251,14 @@
                         Tôi đồng ý với điều khoản thuê xe và chính sách hủy.
                     </label>
 
-                    <ValidationMessage For="@(() => model.Agree)"
-                                       class="bk-error" />
+                    <ValidationMessage For="@(() => model.Agree)" class="bk-error" />
 
                     @if (!string.IsNullOrEmpty(message))
                     {
                         <div class="bk-message">@message</div>
                     }
 
-                    <button type="submit"
-                            class="bk-submit"
-                            disabled="@(!CanSubmit || isSubmitting)">
+                    <button type="submit" class="bk-submit" disabled="@(!CanSubmit || isSubmitting)">
 
                         @(isSubmitting ? "Đang xử lý..." : "Xác nhận đặt xe")
 
@@ -345,7 +321,7 @@
     // =========================================
 
     private string CarName =>
-        response?.Car?.Name ?? "Chưa có thông tin";
+    response?.Car?.Name ?? "Chưa có thông tin";
 
     private string CarCategory
     {
@@ -358,13 +334,13 @@
             var category = response.Car.Category?.Name ?? "";
 
             return string.Join(" · ",
-                new[] { brand, category }
-                    .Where(x => !string.IsNullOrWhiteSpace(x)));
+            new[] { brand, category }
+            .Where(x => !string.IsNullOrWhiteSpace(x)));
         }
     }
 
     private decimal PricePerDay =>
-        response?.Car?.PricePerDay ?? 0;
+    response?.Car?.PricePerDay ?? 0;
 
     private string CarStatusText
     {
@@ -388,8 +364,8 @@
         get
         {
             var image = response?.Images?
-                .OrderByDescending(x => x.IsPrimary)
-                .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Url));
+            .OrderByDescending(x => x.IsPrimary)
+            .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Url));
 
             if (image == null)
                 return "/images/no-car.png";
@@ -404,10 +380,10 @@
     // =========================================
 
     private int Days =>
-        Math.Max(1, (int)Math.Ceiling((Return - Pickup).TotalDays));
+    Math.Max(1, (int)Math.Ceiling((Return - Pickup).TotalDays));
 
     private decimal RentalFee =>
-        PricePerDay * Days;
+    PricePerDay * Days;
 
     // Tạm giữ theo giao diện hiện tại.
     // Có thể thay bằng dữ liệu cấu hình/API sau.
@@ -416,20 +392,20 @@
     private decimal Deposit => 15000000;
 
     private decimal Total =>
-        RentalFee + ServiceFee + Deposit;
+    RentalFee + ServiceFee + Deposit;
 
     private bool IsCarAvailable =>
-        string.Equals(
-            response?.Car?.Status?.ToString(),
-            "Available",
-            StringComparison.OrdinalIgnoreCase);
+    string.Equals(
+    response?.Car?.Status?.ToString(),
+    "Available",
+    StringComparison.OrdinalIgnoreCase);
 
     private bool CanSubmit =>
-        response?.Car != null
-        && IsCarAvailable
-        && PricePerDay > 0
-        && Return > Pickup
-        && Pickup.Date >= DateTime.Today;
+    response?.Car != null
+    && IsCarAvailable
+    && PricePerDay > 0
+    && Return > Pickup
+    && Pickup.Date >= DateTime.Today;
 
 
     // =========================================
@@ -439,8 +415,8 @@
     private static string Money(decimal value)
     {
         return value.ToString(
-            "N0",
-            new CultureInfo("vi-VN")) + " ₫";
+        "N0",
+        new CultureInfo("vi-VN")) + " ₫";
     }
 
     private string ImageUrl(string? path)
@@ -452,14 +428,14 @@
             return absolute.ToString();
 
         var baseUrl = Configuration["Api:BaseUrl"]
-                      ?? "http://localhost:5110/";
+        ?? "http://localhost:5110/";
 
         if (!baseUrl.EndsWith("/"))
             baseUrl += "/";
 
         return new Uri(
-            new Uri(baseUrl),
-            path.TrimStart('/')).ToString();
+        new Uri(baseUrl),
+        path.TrimStart('/')).ToString();
     }
 
 
@@ -535,7 +511,7 @@
         catch (Exception ex)
         {
             pageError = "Không thể kết nối đến máy chủ để tải thông tin xe. "
-                        + ex.Message;
+            + ex.Message;
         }
         finally
         {
@@ -544,8 +520,8 @@
     }
 
     private static bool TryParseBookingDate(
-        string? value,
-        out DateTime result)
+    string? value,
+    out DateTime result)
     {
         result = default;
 
@@ -553,11 +529,11 @@
             return false;
 
         if (DateTime.TryParseExact(
-                value,
-                "yyyy-MM-dd",
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.None,
-                out var date))
+        value,
+        "yyyy-MM-dd",
+        CultureInfo.InvariantCulture,
+        DateTimeStyles.None,
+        out var date))
         {
             result = date.Date.AddHours(9);
             return true;
@@ -596,11 +572,11 @@
 
         var allowedExtensions = new[]
         {
-            ".png",
-            ".jpg",
-            ".jpeg",
-            ".pdf"
-        };
+".png",
+".jpg",
+".jpeg",
+".pdf"
+};
 
         if (!allowedExtensions.Contains(extension))
         {
@@ -615,6 +591,9 @@
     // =========================================
     // SUBMIT
     // =========================================
+
+    private async Task<Guid?> GetCurrentCustomerIdAsync()
+    => await AuthService.GetCurrentUserIdAsync();
 
     private async Task Submit()
     {
@@ -637,29 +616,24 @@
 
         try
         {
-            /*
-             * TODO:
-             * Kết nối API tạo đơn thuê xe tại đây.
-             *
-             * Dữ liệu hiện có:
-             * - response.Car.Id
-             * - Pickup
-             * - Return
-             * - model.FullName
-             * - model.Phone
-             * - model.Email
-             * - model.Address
-             * - payment
-             * - RentalFee
-             * - ServiceFee
-             * - Deposit
-             * - Total
-             *
-             * File giấy phép hiện mới được chọn ở giao diện,
-             * chưa được upload lên Backend.
-             */
+            var customerId = await GetCurrentCustomerIdAsync();
+            if (customerId == null)
+            {
+                Nav.NavigateTo("/login", forceLoad: true);
+                return;
+            }
 
-            message = "Thông tin đặt xe đã được kiểm tra. Chức năng tạo đơn thuê chưa được kết nối API.";
+            var (ok, error, booking) = await Api.CreateBookingAsync(
+            new BookingCreateRequest(customerId.Value, response!.Car!.Id, Pickup, Return));
+
+            if (!ok)
+            {
+                message = error ?? "Không thể tạo đơn thuê.";
+                return;
+            }
+
+            // Chuyển sang trang đơn thuê của tôi
+            Nav.NavigateTo("/user/profile");
         }
         catch (Exception ex)
         {
@@ -691,7 +665,7 @@
         public string Address { get; set; } = "";
 
         [Range(typeof(bool), "true", "true",
-            ErrorMessage = "Bạn cần đồng ý với điều khoản.")]
+        ErrorMessage = "Bạn cần đồng ý với điều khoản.")]
         public bool Agree { get; set; }
     }
 }

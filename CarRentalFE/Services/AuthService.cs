@@ -56,6 +56,26 @@ public class AuthService
         await _storage.DeleteAsync("auth");
     }
 
+
+    public async Task<LoginResponse?> GetSessionAsync()
+    {
+        try
+        {
+            var result = await _storage.GetAsync<LoginResponse>("auth");
+            return result.Success ? result.Value : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<Guid?> GetCurrentUserIdAsync()
+    {
+        var session = await GetSessionAsync();
+        // Convert.ToString xử lý được cả Id kiểu Guid lẫn string
+        return Guid.TryParse(Convert.ToString(session?.User.Id), out var id) ? id : null;
+    }
     private sealed record ErrorBody(string? Message);
 
     private static async Task<string> ReadErrorAsync(HttpResponseMessage response)

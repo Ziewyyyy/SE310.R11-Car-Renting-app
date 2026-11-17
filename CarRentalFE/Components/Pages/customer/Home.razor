@@ -1,0 +1,186 @@
+@page "/"
+@rendermode InteractiveServer
+@layout PublicLayout
+@using CarRentalFE.Components.Shared
+@using CarRentalFE.Models
+@using CarRentalFE.Services
+@inject CarApiService Api
+@inject NavigationManager Nav
+
+<PageTitle>RENTO - Thuê xe tự lái</PageTitle>
+
+<main>
+    <section class="hero" style="background-image: linear-gradient(90deg, rgba(8,15,22,.95) 0%, rgba(8,15,22,.72) 42%, rgba(8,15,22,.08) 78%), url('https://images.unsplash.com/photo-1760713173223-59ef015ad368?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=88&w=1800');">
+        <div class="hero-content">
+            <span class="badge">Hành trình theo cách của bạn</span>
+            <div class="hero-title">Chạm là đi<span>.</span></div>
+            <p>Tìm chiếc xe phù hợp cho hành trình của bạn. Đặt nhanh, giá minh bạch, hỗ trợ tận tâm.</p>
+            <div class="hero-trust">
+                <span><Icon Name="check" Size="17" /> Không phí ẩn</span>
+                <span><Icon Name="check" Size="17" /> Hủy linh hoạt</span>
+                <span><Icon Name="check" Size="17" /> Hỗ trợ 24/7</span>
+            </div>
+        </div>
+        <div class="hero-credit">Photo by ObjectType RAW on Unsplash</div>
+    </section>
+
+    <div class="search-wrap">
+        <div class="search-panel">
+            <label class="field">
+                <span>Địa điểm nhận xe</span>
+                <div class="field-box"><Icon Name="pin" Size="18" /><input value="TP. Hồ Chí Minh" readonly /></div>
+            </label>
+            <label class="field">
+                <span>Nhận xe</span>
+                <div class="field-box"><Icon Name="calendar" Size="18" /><input type="date" @bind="Pickup" @bind:format="yyyy-MM-dd" min="@Today.ToString("yyyy-MM-dd")" /></div>
+            </label>
+            <label class="field">
+                <span>Trả xe</span>
+                <div class="field-box"><Icon Name="calendar" Size="18" /><input type="date" @bind="Return" @bind:format="yyyy-MM-dd" min="@Pickup.AddDays(1).ToString("yyyy-MM-dd")" /></div>
+            </label>
+            <button type="button" class="btn btn-primary" @onclick="Search"><Icon Name="search" Size="19" /> Tìm xe ngay</button>
+        </div>
+    </div>
+
+    <section class="section">
+        <div class="title-row">
+            <div class="section-title">
+                <div class="eyebrow">LỰA CHỌN NỔI BẬT</div>
+                <div class="section-heading">Chiếc xe dành cho bạn</div>
+                <p>Khám phá những mẫu xe mới nhất trong đội xe của RENTO.</p>
+            </div>
+            <a class="btn btn-ghost" href="/cars">Xem tất cả <Icon Name="arrow" Size="17" /></a>
+        </div>
+
+        @if (Error != null)
+        {
+            <div class="api-error">@Error</div>
+        }
+        else if (Featured == null)
+        {
+            <div class="load-state">Đang tải danh sách xe...</div>
+        }
+        else if (Featured.Count == 0)
+        {
+            <div class="load-state">Chưa có xe nào trong hệ thống.</div>
+        }
+        else
+        {
+            <div class="vehicle-grid">
+                @foreach (var car in Featured)
+                {
+                    <CarCard Car="car" />
+                }
+            </div>
+        }
+    </section>
+
+    @if (Categories.Count > 0)
+    {
+        <section class="section categories">
+            <div class="section-title">
+                <div class="eyebrow">DANH MỤC PHỔ BIẾN</div>
+                <div class="section-heading">Đi đúng phong cách của bạn</div>
+            </div>
+            <div class="category-grid">
+                @for (var i = 0; i < Categories.Count && i < 4; i++)
+                {
+                    var c = Categories[i];
+                    <a class="category-card" href="/cars?category=@c.Id">
+                        <span>@("0" + (i + 1))</span>
+                        <div><b>@c.Name</b><small>@c.Description</small></div>
+                        <Icon Name="arrow" />
+                    </a>
+                }
+            </div>
+        </section>
+    }
+
+    <section class="dark-section">
+        <div class="section">
+            <div class="section-title">
+                <div class="eyebrow">VÌ SAO CHỌN RENTO?</div>
+                <div class="section-heading">An tâm trên mọi hành trình</div>
+            </div>
+            <div class="benefit-grid">
+                @foreach (var b in Benefits)
+                {
+                    <div class="benefit">
+                        <span><Icon Name="@b.Icon" /></span>
+                        <b>@b.Title</b>
+                        <p>@b.Text</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="section process" id="huong-dan">
+        <div class="section-title">
+            <div class="eyebrow">CHỈ 3 BƯỚC ĐƠN GIẢN</div>
+            <div class="section-heading">Sẵn sàng lăn bánh</div>
+        </div>
+        <div class="steps">
+            @foreach (var s in Steps)
+            {
+                <div class="step"><span>@s.No</span><div><b>@s.Title</b><p>@s.Text</p></div></div>
+            }
+        </div>
+    </section>
+
+    <section class="cta">
+        <div>
+            <div class="section-heading">Sẵn sàng cho hành trình tiếp theo?</div>
+            <p>Hàng trăm mẫu xe đang chờ bạn khám phá.</p>
+        </div>
+        <a class="btn btn-primary" href="/cars">Tìm xe ngay <Icon Name="arrow" Size="18" /></a>
+    </section>
+</main>
+
+@code {
+    private static DateTime Today => DateTime.Today;
+    private DateTime Pickup = DateTime.Today.AddDays(1);
+    private DateTime Return = DateTime.Today.AddDays(4);
+
+    private List<CarListItem>? Featured;
+    private List<CategoryItem> Categories = new();
+    private string? Error;
+
+    private record Benefit(string Icon, string Title, string Text);
+    private record Step(string No, string Title, string Text);
+
+    private static readonly Benefit[] Benefits =
+    {
+        new("shield", "Bảo hiểm toàn diện", "Mọi chuyến đi đều được bảo vệ với gói bảo hiểm rõ ràng."),
+        new("car", "Xe chất lượng cao", "100% xe được kiểm tra kỹ thuật trước mỗi hành trình."),
+        new("clock", "Hỗ trợ 24/7", "Đội ngũ RENTO luôn sẵn sàng khi bạn cần hỗ trợ."),
+        new("card", "Giá hoàn toàn minh bạch", "Mọi chi phí được hiển thị rõ trước khi bạn xác nhận.")
+    };
+
+    private static readonly Step[] Steps =
+    {
+        new("01", "Chọn xe", "Tìm xe theo địa điểm và thời gian phù hợp."),
+        new("02", "Đặt xe", "Xác nhận thông tin và phương thức thanh toán."),
+        new("03", "Nhận xe", "Kiểm tra, ký hợp đồng và bắt đầu hành trình.")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var cars = await Api.GetCarsAsync(new CarQuery { PageSize = 3, Sort = "newest" });
+            Featured = cars.Items;
+            Categories = await Api.GetCategoriesAsync();
+        }
+        catch (HttpRequestException)
+        {
+            Error = "Không kết nối được máy chủ API. Hãy kiểm tra backend (CarRentalAPI) đã chạy chưa và Api:BaseUrl trong appsettings.json.";
+        }
+    }
+
+    private void Search()
+    {
+        if (Return <= Pickup) Return = Pickup.AddDays(1);
+        Nav.NavigateTo($"/cars?pickup={Pickup:yyyy-MM-dd}&return={Return:yyyy-MM-dd}");
+    }
+}

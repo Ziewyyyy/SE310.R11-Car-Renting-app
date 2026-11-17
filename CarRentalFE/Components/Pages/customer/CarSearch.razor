@@ -1,0 +1,236 @@
+@page "/cars"
+@rendermode InteractiveServer
+@layout PublicLayout
+@using CarRentalFE.Components.Shared
+@using CarRentalFE.Models
+@using CarRentalFE.Services
+@inject CarApiService Api
+
+<PageTitle>Thuê xe - RENTO</PageTitle>
+
+<main class="light-page">
+    <div class="inner">
+        <div class="page-head">
+            <div>
+                <div class="page-title">Tìm chiếc xe phù hợp</div>
+                <p>@(Result == null ? "Đang tải..." : $"{Result.Total} xe phù hợp tại TP. Hồ Chí Minh")</p>
+            </div>
+        </div>
+
+        <div class="search-panel">
+            <label class="field">
+                <span>Địa điểm nhận xe</span>
+                <div class="field-box"><Icon Name="pin" Size="18" /><input value="TP. Hồ Chí Minh" readonly /></div>
+            </label>
+            <label class="field">
+                <span>Nhận xe</span>
+                <div class="field-box"><Icon Name="calendar" Size="18" /><input type="date" @bind="PickupDate" @bind:format="yyyy-MM-dd" /></div>
+            </label>
+            <label class="field">
+                <span>Trả xe</span>
+                <div class="field-box"><Icon Name="calendar" Size="18" /><input type="date" @bind="ReturnDate" @bind:format="yyyy-MM-dd" /></div>
+            </label>
+            <button type="button" class="btn btn-primary" @onclick="ApplyDates"><Icon Name="search" Size="19" /> Tìm xe ngay</button>
+        </div>
+
+        <div class="results-layout">
+            <aside class="filters">
+                <div class="filter-title"><b>Bộ lọc</b><button type="button" @onclick="ClearAll">Xóa tất cả</button></div>
+
+                <label class="field">
+                    <span>Tên xe hoặc biển số</span>
+                    <div class="field-box"><input placeholder="Vios, Mazda..." @bind="Q.Keyword" @bind:event="onchange" @bind:after="Reload" /></div>
+                </label>
+
+                <label class="field">
+                    <span>Hãng xe</span>
+                    <div class="field-box">
+                        <select @bind="Q.BrandId" @bind:after="Reload">
+                            <option value="">Tất cả hãng</option>
+                            @foreach (var b in Brands)
+                            {
+                                <option value="@b.Id">@b.Name</option>
+                            }
+                        </select>
+                    </div>
+                </label>
+
+                <label class="field">
+                    <span>Loại xe</span>
+                    <div class="field-box">
+                        <select @bind="Q.CategoryId" @bind:after="Reload">
+                            <option value="">Tất cả loại</option>
+                            @foreach (var c in Categories)
+                            {
+                                <option value="@c.Id">@c.Name</option>
+                            }
+                        </select>
+                    </div>
+                </label>
+
+                <div class="filter-group">
+                    <b>Số chỗ</b>
+                    <div class="chips">
+                        @foreach (var s in new[] { 4, 5, 7 })
+                        {
+                            var seat = s;
+                            <button type="button" class="@(Q.Seats == seat ? "selected" : "")" @onclick="() => ToggleSeat(seat)">@seat chỗ</button>
+                        }
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <b>Giá thuê tối đa mỗi ngày</b>
+                    <input class="range" type="range" min="@PriceMin" max="@PriceMax" step="50000"
+                           @bind="MaxPrice" @bind:event="onchange" @bind:after="PriceChanged" />
+                    <div class="range-label">
+                        <span>@PriceMin.ToString("N0") ₫</span>
+                        <span>@(MaxPrice >= PriceMax ? "Không giới hạn" : MaxPrice.ToString("N0") + " ₫")</span>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="results">
+                <div class="results-top">
+                    <div class="active-filters">
+                        @if (Q.Seats != null) { <span class="badge">@Q.Seats chỗ</span> }
+                        @if (Q.PickupDate != null) { <span class="badge">@(Q.PickupDate?.ToString("dd/MM")) – @(Q.ReturnDate?.ToString("dd/MM"))</span> }
+                    </div>
+                    <select class="sort" @bind="Sort" @bind:after="Reload">
+                        <option value="">Phù hợp nhất</option>
+                        <option value="price_asc">Giá thấp đến cao</option>
+                        <option value="price_desc">Giá cao đến thấp</option>
+                        <option value="newest">Đời xe mới nhất</option>
+                    </select>
+                </div>
+
+                @if (Error != null)
+                {
+                    <div class="api-error">@Error</div>
+                }
+                else if (Loading && Result == null)
+                {
+                    <div class="load-state">Đang tải danh sách xe...</div>
+                }
+                else if (Result != null && Result.Items.Count == 0)
+                {
+                    <div class="empty-state">
+                        <Icon Name="search" Size="34" />
+                        <b>Không tìm thấy xe phù hợp</b>
+                        <p>Hãy thử thay đổi từ khóa, ngày thuê hoặc bộ lọc.</p>
+                        <button type="button" class="btn btn-secondary" @onclick="ClearAll">Xóa bộ lọc</button>
+                    </div>
+                }
+                else if (Result != null)
+                {
+                    <div class="results-grid">
+                        @foreach (var car in Result.Items)
+                        {
+                            <CarCard Car="car" />
+                        }
+                    </div>
+
+                    @if (TotalPages > 1)
+                    {
+                        <div class="pagination">
+                            <button type="button" disabled="@(Q.Page <= 1)" @onclick="() => GoPage(Q.Page - 1)">‹</button>
+                            @for (var n = 1; n <= TotalPages; n++)
+                            {
+                                var pg = n;
+                                <button type="button" class="@(Q.Page == pg ? "active" : "")" @onclick="() => GoPage(pg)">@pg</button>  
+                            }
+                            <button type="button" disabled="@(Q.Page >= TotalPages)" @onclick="() => GoPage(Q.Page + 1)">›</button>
+                        </div>
+                    }
+                }
+            </section>
+        </div>
+    </div>
+</main>
+
+@code {
+    // Cho phép mở trang với /cars?category=...&pickup=2026-11-20&return=2026-11-23
+    [SupplyParameterFromQuery(Name = "category")] public Guid? CategoryParam { get; set; }
+    [SupplyParameterFromQuery(Name = "pickup")] public string? PickupParam { get; set; }
+    [SupplyParameterFromQuery(Name = "return")] public string? ReturnParam { get; set; }
+    [SupplyParameterFromQuery(Name = "keyword")] public string? KeywordParam { get; set; }
+
+    private const int PriceMin = 300000;
+    private const int PriceMax = 2000000;
+
+    private readonly CarQuery Q = new() { PageSize = 9 };
+    private PagedResult<CarListItem>? Result;
+    private List<BrandItem> Brands = new();
+    private List<CategoryItem> Categories = new();
+    private DateTime PickupDate = DateTime.Today.AddDays(1);
+    private DateTime ReturnDate = DateTime.Today.AddDays(4);
+    private int MaxPrice = PriceMax;
+    private string Sort = "";
+    private bool Loading;
+    private string? Error;
+
+    private int TotalPages => Result == null ? 1 : Math.Max(1, (int)Math.Ceiling(Result.Total / (double)Q.PageSize));
+
+    protected override async Task OnInitializedAsync()
+    {
+        Q.CategoryId = CategoryParam;
+        Q.Keyword = KeywordParam;
+        if (DateTime.TryParse(PickupParam, out var p) && DateTime.TryParse(ReturnParam, out var r) && r > p)
+        {
+            PickupDate = p; ReturnDate = r;
+            Q.PickupDate = p; Q.ReturnDate = r;
+        }
+
+        try
+        {
+            Brands = await Api.GetBrandsAsync();
+            Categories = await Api.GetCategoriesAsync();
+        }
+        catch (HttpRequestException) { /* lỗi sẽ hiện khi tải danh sách xe */ }
+
+        await Load();
+    }
+
+    private async Task Load()
+    {
+        Loading = true;
+        Error = null;
+        try
+        {
+            Q.Sort = string.IsNullOrEmpty(Sort) ? null : Sort;
+            Q.MaxPrice = MaxPrice >= PriceMax ? null : MaxPrice;
+            Result = await Api.GetCarsAsync(Q);
+        }
+        catch (HttpRequestException)
+        {
+            Error = "Không kết nối được máy chủ API. Hãy kiểm tra backend (CarRentalAPI) đã chạy chưa và Api:BaseUrl trong appsettings.json.";
+        }
+        Loading = false;
+    }
+
+    private async Task Reload() { Q.Page = 1; await Load(); }
+    private async Task PriceChanged() => await Reload();
+    private async Task GoPage(int page) { Q.Page = Math.Clamp(page, 1, TotalPages); await Load(); }
+
+    private async Task ToggleSeat(int seat)
+    {
+        Q.Seats = Q.Seats == seat ? null : seat;
+        await Reload();
+    }
+
+    private async Task ApplyDates()
+    {
+        if (ReturnDate <= PickupDate) ReturnDate = PickupDate.AddDays(1);
+        Q.PickupDate = PickupDate;
+        Q.ReturnDate = ReturnDate;
+        await Reload();
+    }
+
+    private async Task ClearAll()
+    {
+        Q.Keyword = null; Q.BrandId = null; Q.CategoryId = null; Q.Seats = null;
+        Q.PickupDate = null; Q.ReturnDate = null;
+        MaxPrice = PriceMax; Sort = "";
+        await Reload();
+    }
+}

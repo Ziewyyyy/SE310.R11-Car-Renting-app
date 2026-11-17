@@ -1,0 +1,56 @@
+/* Trang quản lý xe (admin) - dựa trên Figma "Car Rental Management Dashboard", dùng chung màu với dashboard.css */
+.veh { --cyan: #17c3e3; --muted: #8197ac; --panel: #192936; --border: #293d4b; --danger: #e34e69; color: #edf4fa; width: 100%; }
+.veh h1 { font-size: 29px; margin: 9px 0 7px; font-weight: 750; letter-spacing: -.5px; }
+.veh .veh-sub { color: var(--muted); font-size: 12px; margin: 0; }
+.veh .veh-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 22px; }
+
+.veh-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.veh-tabs button { background: none; border: 0; color: var(--muted); padding: 11px 16px; font-size: 12px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; }
+.veh-tabs button.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+.veh-btn { height: 40px; padding: 0 16px; border-radius: 9px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: #172632; color: #dce7f0; }
+.veh-btn.primary { background: var(--cyan); border-color: var(--cyan); color: #08232e; }
+.veh-btn.danger { color: var(--danger); border-color: #5a2a36; background: #2a1a22; }
+.veh-btn:disabled { opacity: .5; cursor: default; }
+.veh-link { background: none; border: 0; color: var(--cyan); font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 6px; }
+.veh-link.danger { color: var(--danger); }
+
+.veh-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.veh-toolbar input, .veh-toolbar select, .veh-form input, .veh-form select, .veh-form textarea {
+    background: #172632; color: #dce7f0; border: 1px solid var(--border); border-radius: 9px; padding: 0 12px; height: 40px; font-size: 12px; outline: none; font-family: inherit;
+}
+.veh-toolbar input { min-width: 260px; }
+.veh-toolbar input:focus, .veh-toolbar select:focus, .veh-form input:focus, .veh-form select:focus, .veh-form textarea:focus { border-color: var(--cyan); }
+.veh select option { background: #172632; color: #dce7f0; }
+
+.veh-name { display: flex; flex-direction: column; gap: 3px; }
+.veh-name strong { color: #e5edf5; font-size: 12px; }
+.veh-name span { color: #6f879b; font-size: 10px; }
+.veh-status-select { background: transparent; color: inherit; border: 0; font: inherit; font-weight: 700; cursor: pointer; outline: none; }
+.veh-badge-danger { background: #43242c; color: #f08a9d; }
+.veh-empty { padding: 40px 0; text-align: center; color: var(--muted); font-size: 13px; }
+.veh-foot { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; color: var(--muted); font-size: 11px; }
+.veh-foot div { display: flex; gap: 5px; }
+.veh-foot button { min-width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--border); background: #172632; color: #a9bac9; cursor: pointer; }
+.veh-foot button.current { background: var(--cyan); border-color: var(--cyan); color: #08232e; font-weight: 700; }
+.veh-foot button:disabled { opacity: .4; cursor: default; }
+
+.veh-alert { padding: 12px 14px; border-radius: 10px; font-size: 12px; margin-bottom: 14px; border: 1px solid #5a2a36; background: #2a1a22; color: #f08a9d; }
+.veh-ok { border-color: #1f5b4a; background: #123d3c; color: #48d6a1; }
+
+.veh-backdrop { position: fixed; inset: 0; background: rgba(4, 12, 18, .72); display: grid; place-items: center; z-index: 100; padding: 20px; }
+.veh-modal { width: min(720px, 100%); max-height: 92vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; }
+.veh-modal.small { width: min(440px, 100%); }
+.veh-modal-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 22px 24px 4px; }
+.veh-modal-head span { color: var(--cyan); font-size: 10px; font-weight: 700; letter-spacing: 1.2px; }
+.veh-modal-head strong { display: block; font-size: 19px; margin-top: 6px; }
+.veh-modal-head button { background: none; border: 0; color: var(--muted); font-size: 24px; cursor: pointer; }
+.veh-modal-body { padding: 14px 24px 6px; }
+.veh-modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px 22px; }
+.veh-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.veh-form label { display: flex; flex-direction: column; gap: 6px; font-size: 11px; font-weight: 600; color: #a9bac9; }
+.veh-form label.wide { grid-column: 1 / -1; }
+.veh-form textarea { height: 80px; padding: 10px 12px; resize: vertical; }
+.veh-form small { color: #6f879b; font-weight: 400; }
+@media (max-width: 640px) { .veh-form { grid-template-columns: 1fr; } .veh-toolbar input { min-width: 0; width: 100%; } }
+.veh .status-badge { font-size: 11px; padding: 5px 10px; }

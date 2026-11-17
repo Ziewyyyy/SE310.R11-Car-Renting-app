@@ -1,0 +1,45 @@
+@inherits LayoutComponentBase
+@using CarRentalFE.Components.Shared
+
+<div class="pub">
+    <header class="header">
+        <a class="logo" href="/">
+            <span class="logo-mark"><Icon Name="car" Size="22" /></span><span>RENTO</span>
+        </a>
+        <nav>
+            <a href="/">Trang chủ</a>
+            <a href="/cars">Thuê xe</a>
+            <a href="/#huong-dan">Hướng dẫn thuê xe</a>
+            <a href="/support">Hỗ trợ</a>
+        </nav>
+        <div class="header-actions">
+            <a class="btn btn-ghost" href="/login">Đăng nhập</a>
+            <a class="btn btn-primary" href="/register">Đăng ký</a>
+        </div>
+    </header>
+
+    @Body
+
+    <footer>
+        <div>
+            <a class="logo" href="/"><span class="logo-mark"><Icon Name="car" Size="22" /></span><span>RENTO</span></a>
+            <p>Đồng hành cùng bạn trên mọi hành trình.</p>
+        </div>
+        <div>
+            <b>Khám phá</b>
+            <a href="/cars">Thuê xe</a>
+            <a href="/#huong-dan">Hướng dẫn</a>
+        </div>
+        <div>
+            <b>Hỗ trợ</b>
+            <a href="/support">Trung tâm trợ giúp</a>
+            <a href="/contracts">Hợp đồng</a>
+        </div>
+        <div>
+            <b>Liên hệ</b>
+            <p>1900 636 886</p>
+            <p>hello@rento.vn</p>
+            <p>TP. Hồ Chí Minh, Việt Nam</p>
+        </div>
+    </footer>
+</div>

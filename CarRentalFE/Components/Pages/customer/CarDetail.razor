@@ -1,0 +1,180 @@
+@page "/cars/{Id:guid}"
+@rendermode InteractiveServer
+@layout PublicLayout
+@using System.Globalization
+@using CarRentalFE.Components.Shared
+@using CarRentalFE.Models
+@using CarRentalFE.Services
+@inject CarApiService Api
+
+<PageTitle>@(Data?.Car.Name ?? "Chi tiết xe") - RENTO</PageTitle>
+
+<main class="light-page">
+    <div class="inner">
+        @if (Error != null)
+        {
+            <div class="api-error">@Error</div>
+        }
+        else if (Loading)
+        {
+            <div class="load-state">Đang tải thông tin xe...</div>
+        }
+        else if (Data == null)
+        {
+            <div class="empty-state">
+                <Icon Name="car" Size="34" />
+                <b>Không tìm thấy xe</b>
+                <p>Xe này không tồn tại hoặc đã ngừng hoạt động.</p>
+                <a class="btn btn-secondary" href="/cars">Quay lại danh sách</a>
+            </div>
+        }
+        else
+        {
+            var car = Data.Car;
+            var photos = Data.Images.Where(i => i.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase)).ToList();
+
+            <div class="breadcrumb">
+                <a href="/cars">Thuê xe</a><span>/</span><b>@car.Name</b>
+            </div>
+
+            <div class="gallery">
+                @if (photos.Count > 0)
+                {
+                    <img class="gallery-main" src="@photos[0].Url" alt="@car.Name" />
+                    @if (photos.Count > 1) { <img src="@photos[1].Url" alt="Ảnh xe @car.Name" /> }
+                    @if (photos.Count > 2) { <img src="@photos[2].Url" alt="Ảnh xe @car.Name" /> }
+                }
+                else
+                {
+                    <div class="gallery-main img-fallback" style="grid-column: 1 / -1; grid-row: 1 / -1;"><Icon Name="car" Size="72" /></div>
+                }
+            </div>
+
+            <div class="details-grid">
+                <section>
+                    <div class="eyebrow">@car.Brand.Name · @car.Category.Name</div>
+                    <div class="detail-title">@car.Name</div>
+                    @if (car.AverageRating != null)
+                    {
+                        <div class="rating"><Icon Name="star" Size="16" /> @car.AverageRating.Value.ToString("0.0") <small>(@car.ReviewCount đánh giá)</small></div>
+                    }
+                    <div class="detail-specs">
+                        <span><Icon Name="user" />@car.Seats chỗ</span>
+                        <span><Icon Name="calendar" />Đời @car.ManufactureYear</span>
+                        <span><Icon Name="car" />Màu @car.Color</span>
+                        <span><Icon Name="clock" />@car.Mileage.ToString("N0") km</span>
+                    </div>
+
+                    <div class="content-block">
+                        <div class="block-title">Thông tin xe</div>
+                        <p>
+                            @car.Name thuộc dòng @car.Category.Name.ToLower() của hãng @car.Brand.Name
+                            @(string.IsNullOrWhiteSpace(car.Brand.Country) ? "" : $"({car.Brand.Country})").
+                            @car.Category.Description
+                        </p>
+                    </div>
+
+                    @if (Data.Features.Count > 0)
+                    {
+                        <div class="content-block">
+                            <div class="block-title">Tiện nghi</div>
+                            <div class="feature-chips">
+                                @foreach (var f in Data.Features)
+                                {
+                                    <span>@f.Name</span>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="content-block">
+                        <div class="block-title">Điều kiện thuê xe</div>
+                        <ul>
+                            <li>CCCD/Hộ chiếu và giấy phép lái xe hợp lệ</li>
+                            <li>Đặt cọc theo hợp đồng, hoàn lại sau khi trả xe</li>
+                            <li>Nhận và trả xe đúng giờ ghi trong hợp đồng</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <aside class="booking-card">
+                    <div class="price"><b>@car.PricePerDay.ToString("N0", Vi) ₫</b><span>/ ngày</span></div>
+
+                    <label class="field">
+                        <span>Nhận xe</span>
+                        <div class="field-box"><Icon Name="calendar" Size="18" /><input type="date" @bind="Pickup" @bind:format="yyyy-MM-dd" min="@DateTime.Today.ToString("yyyy-MM-dd")" /></div>
+                    </label>
+                    <label class="field">
+                        <span>Trả xe</span>
+                        <div class="field-box"><Icon Name="calendar" Size="18" /><input type="date" @bind="Return" @bind:format="yyyy-MM-dd" min="@Pickup.AddDays(1).ToString("yyyy-MM-dd")" /></div>
+                    </label>
+
+                    <div class="cost-line"><span>@car.PricePerDay.ToString("N0", Vi) ₫ × @Days ngày</span><b>@Total.ToString("N0", Vi) ₫</b></div>
+                    <div class="cost-total"><span>Chi phí dự kiến</span><b>@Total.ToString("N0", Vi) ₫</b></div>
+                    <small>Chưa bao gồm khoản đặt cọc có thể hoàn lại.</small>
+
+                    @if (car.Status == "Available")
+                    {
+                        <a class="btn btn-primary w-full" href="/checkout?carId=@car.Id&pickup=@Pickup.ToString("yyyy-MM-dd")&return=@Return.ToString("yyyy-MM-dd")">Đặt xe <Icon Name="arrow" /></a>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-secondary w-full" disabled>Xe hiện không sẵn sàng</button>
+                    }
+                </aside>
+            </div>
+
+            @if (Related.Count > 0)
+            {
+                <section class="related">
+                    <div class="section-title"><div class="section-heading">Có thể bạn cũng thích</div></div>
+                    <div class="vehicle-grid">
+                        @foreach (var r in Related)
+                        {
+                            <CarCard Car="r" />
+                        }
+                    </div>
+                </section>
+            }
+        }
+    </div>
+</main>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private static readonly CultureInfo Vi = new("vi-VN");
+
+    private CarDetailResponse? Data;
+    private List<CarListItem> Related = new();
+    private DateTime Pickup = DateTime.Today.AddDays(1);
+    private DateTime Return = DateTime.Today.AddDays(4);
+    private bool Loading = true;
+    private string? Error;
+
+    private int Days => Math.Max(1, (int)Math.Ceiling((Return - Pickup).TotalDays));
+    private decimal Total => (Data?.Car.PricePerDay ?? 0) * Days;
+
+    // Chạy lại khi chuyển từ xe này sang xe khác (bấm vào "Có thể bạn cũng thích")
+    protected override async Task OnParametersSetAsync()
+    {
+        Loading = true;
+        Error = null;
+        Data = null;
+        Related = new();
+        try
+        {
+            Data = await Api.GetCarAsync(Id);
+            if (Data != null)
+            {
+                var same = await Api.GetCarsAsync(new CarQuery { CategoryId = Data.Car.Category.Id, PageSize = 4 });
+                Related = same.Items.Where(c => c.Id != Id).Take(3).ToList();
+            }
+        }
+        catch (HttpRequestException)
+        {
+            Error = "Không kết nối được máy chủ API. Hãy kiểm tra backend (CarRentalAPI) đã chạy chưa và Api:BaseUrl trong appsettings.json.";
+        }
+        Loading = false;
+    }
+}

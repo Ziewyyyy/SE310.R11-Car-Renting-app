@@ -2,6 +2,9 @@
 @rendermode InteractiveServer
 @using CarRentalFE.Components.Layout
 @layout EmptyLayout
+@using CarRentalFE.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
 @inject NavigationManager Navigation
 
 <PageTitle>Thông tin cá nhân - RENTO</PageTitle>
@@ -53,7 +56,7 @@
                 </a>
             </nav>
 
-            <a href="/login" class="sidebar-logout">
+            <a href="javascript:void(0)" class="sidebar-logout" @onclick="Logout">
                 ⇥ &nbsp; Đăng xuất
             </a>
         </aside>
@@ -264,8 +267,9 @@
         NewPassword = "";
     }
 
-    private void Logout()
+    private async Task Logout()
     {
-        Navigation.NavigateTo("/login");
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

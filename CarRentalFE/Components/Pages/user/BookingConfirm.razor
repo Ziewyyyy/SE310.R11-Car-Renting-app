@@ -1,0 +1,697 @@
+@page "/user/confirm"
+@rendermode InteractiveServer
+@layout UserLayout
+@using CarRentalFE.Components.Layout
+
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using CarRentalFE.Models
+@using CarRentalFE.Services
+
+@inject AuthService AuthService
+@inject CarApiService Api
+@inject IConfiguration Configuration
+@inject NavigationManager Nav
+
+<PageTitle>Xác nhận đặt xe | RENTO</PageTitle>
+
+<main class="bk-page">
+    <div class="bk-container">
+
+        <h1 class="bk-title">Xác nhận đặt xe</h1>
+        <p class="bk-subtitle">
+            Kiểm tra kỹ thông tin trước khi gửi yêu cầu.
+        </p>
+
+        @if (isLoadingCar)
+        {
+            <div class="bk-loading">
+                Đang tải thông tin xe...
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(pageError))
+        {
+            <div class="bk-page-error">
+                <h3>Không thể tải thông tin đặt xe</h3>
+                <p>@pageError</p>
+                <a href="/user/cars">Quay lại danh sách xe</a>
+            </div>
+        }
+        else if (response?.Car != null)
+        {
+            <EditForm Model="@model"
+                      OnValidSubmit="@Submit"
+                      class="bk-grid">
+
+                <DataAnnotationsValidator />
+
+                <!-- CỘT TRÁI -->
+                <div class="bk-left">
+
+                    <!-- 1. THÔNG TIN LIÊN HỆ -->
+                    <section class="bk-card">
+                        <h2 class="bk-step">
+                            <span>1</span>
+                            Thông tin liên hệ
+                        </h2>
+
+                        <div class="bk-form-grid">
+
+                            <div class="bk-field">
+                                <label>Họ và tên *</label>
+                                <InputText class="bk-input"
+                                           @bind-Value="model.FullName"
+                                           placeholder="Nhập họ và tên" />
+
+                                <ValidationMessage For="@(() => model.FullName)"
+                                                   class="bk-error" />
+                            </div>
+
+                            <div class="bk-field">
+                                <label>Số điện thoại *</label>
+                                <InputText class="bk-input"
+                                           @bind-Value="model.Phone"
+                                           placeholder="Nhập số điện thoại" />
+
+                                <ValidationMessage For="@(() => model.Phone)"
+                                                   class="bk-error" />
+                            </div>
+
+                            <div class="bk-field">
+                                <label>Email *</label>
+                                <InputText class="bk-input"
+                                           @bind-Value="model.Email"
+                                           placeholder="Nhập email" />
+
+                                <ValidationMessage For="@(() => model.Email)"
+                                                   class="bk-error" />
+                            </div>
+
+                            <div class="bk-field">
+                                <label>Địa chỉ</label>
+                                <InputText class="bk-input"
+                                           @bind-Value="model.Address"
+                                           placeholder="Nhập địa chỉ" />
+                            </div>
+
+                        </div>
+                    </section>
+
+                    <!-- 2. XÁC MINH GIẤY PHÉP -->
+                    <section class="bk-card">
+                        <h2 class="bk-step">
+                            <span>2</span>
+                            Xác minh giấy phép
+                        </h2>
+
+                        <div class="bk-upload">
+
+                            <div class="bk-upload-icon">📄</div>
+
+                            <div class="bk-upload-text">
+                                <strong>
+                                    @(string.IsNullOrEmpty(licenseName)
+                                        ? "Tải lên giấy phép lái xe"
+                                        : licenseName)
+                                </strong>
+
+                                <small>PNG, JPG hoặc PDF, tối đa 5MB</small>
+                            </div>
+
+                            <label class="bk-upload-btn">
+                                Chọn tệp
+                                <InputFile OnChange="OnLicenseSelected"
+                                           accept=".png,.jpg,.jpeg,.pdf"
+                                           hidden />
+                            </label>
+
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(uploadError))
+                        {
+                            <div class="bk-error">@uploadError</div>
+                        }
+                    </section>
+
+                    <!-- 3. PHƯƠNG THỨC THANH TOÁN -->
+                    <section class="bk-card">
+                        <h2 class="bk-step">
+                            <span>3</span>
+                            Phương thức thanh toán
+                        </h2>
+
+                        <div class="bk-pay-grid">
+
+                            <label class="bk-pay @(payment == "card" ? "selected" : "")">
+
+                                <input type="radio"
+                                       name="payment"
+                                       checked="@(payment == "card")"
+                                       @onchange="@(() => payment = "card")" />
+
+                                <span class="bk-pay-icon">💳</span>
+
+                                <span class="bk-pay-text">
+                                    <b>Thẻ ngân hàng</b>
+                                    <small>Visa, Mastercard, JCB</small>
+                                </span>
+
+                            </label>
+
+                            <label class="bk-pay @(payment == "momo" ? "selected" : "")">
+
+                                <input type="radio"
+                                       name="payment"
+                                       checked="@(payment == "momo")"
+                                       @onchange="@(() => payment = "momo")" />
+
+                                <span class="bk-pay-icon momo">M</span>
+
+                                <span class="bk-pay-text">
+                                    <b>Ví MoMo</b>
+                                    <small>Thanh toán an toàn qua MoMo</small>
+                                </span>
+
+                            </label>
+
+                        </div>
+                    </section>
+
+                </div>
+
+                <!-- CỘT PHẢI: TÓM TẮT ĐẶT XE -->
+                <aside class="bk-summary">
+
+                    <!-- THÔNG TIN XE -->
+                    <div class="bk-car">
+
+                        <img src="@CarImage"
+                             alt="@CarName"
+                             onerror="this.src='/images/no-car.png'" />
+
+                        <div>
+                            <span class="bk-badge">@CarStatusText</span>
+
+                            <b>@CarName</b>
+
+                            <small>@CarCategory</small>
+                        </div>
+
+                    </div>
+
+                    <!-- THỜI GIAN THUÊ -->
+                    <div class="bk-trip">
+
+                        <div class="bk-trip-item">
+                            <span class="bk-trip-pin">📍</span>
+
+                            <div>
+                                <small>Nhận xe</small>
+
+                                <b>@Pickup.ToString("dd/MM/yyyy · HH:mm")</b>
+
+                                <em>Quận 1, TP. Hồ Chí Minh</em>
+                            </div>
+                        </div>
+
+                        <div class="bk-trip-item">
+                            <span class="bk-trip-pin">📍</span>
+
+                            <div>
+                                <small>Trả xe</small>
+
+                                <b>@Return.ToString("dd/MM/yyyy · HH:mm")</b>
+
+                                <em>Cùng địa điểm nhận xe</em>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- CHI TIẾT GIÁ -->
+                    <div class="bk-prices">
+
+                        <div>
+                            <span>Giá thuê / ngày</span>
+                            <b>@Money(PricePerDay)</b>
+                        </div>
+
+                        <div>
+                            <span>Số ngày thuê</span>
+                            <b>@Days ngày</b>
+                        </div>
+
+                        <div>
+                            <span>Tiền thuê xe</span>
+                            <b>@Money(RentalFee)</b>
+                        </div>
+
+                        <div>
+                            <span>Phí dịch vụ</span>
+                            <b>@Money(ServiceFee)</b>
+                        </div>
+
+                        <div>
+                            <span>Đặt cọc (hoàn lại)</span>
+                            <b>@Money(Deposit)</b>
+                        </div>
+
+                    </div>
+
+                    <!-- TỔNG TIỀN -->
+                    <div class="bk-total">
+                        <span>Tổng dự kiến</span>
+                        <strong>@Money(Total)</strong>
+                    </div>
+
+                    <!-- ĐIỀU KHOẢN -->
+                    <label class="bk-agree">
+                        <input type="checkbox" @bind="model.Agree" />
+                        Tôi đồng ý với điều khoản thuê xe và chính sách hủy.
+                    </label>
+
+                    <ValidationMessage For="@(() => model.Agree)"
+                                       class="bk-error" />
+
+                    @if (!string.IsNullOrEmpty(message))
+                    {
+                        <div class="bk-message">@message</div>
+                    }
+
+                    <button type="submit"
+                            class="bk-submit"
+                            disabled="@(!CanSubmit || isSubmitting)">
+
+                        @(isSubmitting ? "Đang xử lý..." : "Xác nhận đặt xe")
+
+                    </button>
+
+                </aside>
+
+            </EditForm>
+        }
+
+    </div>
+</main>
+
+@code {
+    // =========================================
+    // QUERY PARAMETERS
+    // =========================================
+
+    [SupplyParameterFromQuery(Name = "carId")]
+    public string? CarId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "pickupDate")]
+    public string? PickupText { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnDate")]
+    public string? ReturnText { get; set; }
+
+
+    // =========================================
+    // API DATA
+    // =========================================
+
+    private CarDetailResponse? response;
+
+    private bool isLoadingCar = true;
+    private bool isSubmitting;
+
+    private string? pageError;
+
+
+    // =========================================
+    // BOOKING INFORMATION
+    // =========================================
+
+    private DateTime Pickup = DateTime.Today.AddDays(1).AddHours(9);
+    private DateTime Return = DateTime.Today.AddDays(4).AddHours(9);
+
+    private BookingModel model = new();
+
+    private string payment = "card";
+
+    private string? licenseName;
+    private string? uploadError;
+
+    private string message = "";
+
+
+    // =========================================
+    // CAR INFORMATION FROM API
+    // =========================================
+
+    private string CarName =>
+        response?.Car?.Name ?? "Chưa có thông tin";
+
+    private string CarCategory
+    {
+        get
+        {
+            if (response?.Car == null)
+                return "";
+
+            var brand = response.Car.Brand?.Name ?? "";
+            var category = response.Car.Category?.Name ?? "";
+
+            return string.Join(" · ",
+                new[] { brand, category }
+                    .Where(x => !string.IsNullOrWhiteSpace(x)));
+        }
+    }
+
+    private decimal PricePerDay =>
+        response?.Car?.PricePerDay ?? 0;
+
+    private string CarStatusText
+    {
+        get
+        {
+            var status = response?.Car?.Status;
+
+            return status?.ToString() switch
+            {
+                "Available" => "Sẵn sàng",
+                "Rented" => "Đang cho thuê",
+                "Maintenance" => "Đang bảo trì",
+                "Damaged" => "Hư hỏng",
+                _ => status?.ToString() ?? "Không xác định"
+            };
+        }
+    }
+
+    private string CarImage
+    {
+        get
+        {
+            var image = response?.Images?
+                .OrderByDescending(x => x.IsPrimary)
+                .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Url));
+
+            if (image == null)
+                return "/images/no-car.png";
+
+            return ImageUrl(image.Url);
+        }
+    }
+
+
+    // =========================================
+    // PRICE CALCULATION
+    // =========================================
+
+    private int Days =>
+        Math.Max(1, (int)Math.Ceiling((Return - Pickup).TotalDays));
+
+    private decimal RentalFee =>
+        PricePerDay * Days;
+
+    // Tạm giữ theo giao diện hiện tại.
+    // Có thể thay bằng dữ liệu cấu hình/API sau.
+    private decimal ServiceFee => 350000;
+
+    private decimal Deposit => 15000000;
+
+    private decimal Total =>
+        RentalFee + ServiceFee + Deposit;
+
+    private bool IsCarAvailable =>
+        string.Equals(
+            response?.Car?.Status?.ToString(),
+            "Available",
+            StringComparison.OrdinalIgnoreCase);
+
+    private bool CanSubmit =>
+        response?.Car != null
+        && IsCarAvailable
+        && PricePerDay > 0
+        && Return > Pickup
+        && Pickup.Date >= DateTime.Today;
+
+
+    // =========================================
+    // FORMAT
+    // =========================================
+
+    private static string Money(decimal value)
+    {
+        return value.ToString(
+            "N0",
+            new CultureInfo("vi-VN")) + " ₫";
+    }
+
+    private string ImageUrl(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return "/images/no-car.png";
+
+        if (Uri.TryCreate(path, UriKind.Absolute, out var absolute))
+            return absolute.ToString();
+
+        var baseUrl = Configuration["Api:BaseUrl"]
+                      ?? "http://localhost:5110/";
+
+        if (!baseUrl.EndsWith("/"))
+            baseUrl += "/";
+
+        return new Uri(
+            new Uri(baseUrl),
+            path.TrimStart('/')).ToString();
+    }
+
+
+    // =========================================
+    // LOAD DATA
+    // =========================================
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoadingCar = true;
+        pageError = null;
+        response = null;
+
+        try
+        {
+            // Kiểm tra CarId
+            if (!Guid.TryParse(CarId, out var carGuid))
+            {
+                pageError = "Mã xe không hợp lệ. Vui lòng quay lại trang chi tiết xe.";
+                return;
+            }
+
+            // Đọc ngày nhận xe
+            if (!TryParseBookingDate(PickupText, out var pickup))
+            {
+                pageError = "Ngày nhận xe không hợp lệ.";
+                return;
+            }
+
+            // Đọc ngày trả xe
+            if (!TryParseBookingDate(ReturnText, out var returnDate))
+            {
+                pageError = "Ngày trả xe không hợp lệ.";
+                return;
+            }
+
+            Pickup = pickup;
+            Return = returnDate;
+
+            if (Pickup.Date < DateTime.Today)
+            {
+                pageError = "Ngày nhận xe không thể nằm trong quá khứ.";
+                return;
+            }
+
+            if (Return <= Pickup)
+            {
+                pageError = "Ngày trả xe phải sau ngày nhận xe.";
+                return;
+            }
+
+            // Gọi API lấy thông tin xe
+            response = await Api.GetCarAsync(carGuid);
+
+            if (response?.Car == null)
+            {
+                pageError = "Không tìm thấy thông tin xe. Xe có thể đã bị xóa hoặc không còn tồn tại.";
+                return;
+            }
+
+            if (PricePerDay <= 0)
+            {
+                pageError = "Xe hiện chưa có thông tin giá thuê hợp lệ.";
+                return;
+            }
+
+            if (!IsCarAvailable)
+            {
+                pageError = "Xe hiện không sẵn sàng để cho thuê. Vui lòng chọn xe khác.";
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            pageError = "Không thể kết nối đến máy chủ để tải thông tin xe. "
+                        + ex.Message;
+        }
+        finally
+        {
+            isLoadingCar = false;
+        }
+    }
+
+    private static bool TryParseBookingDate(
+        string? value,
+        out DateTime result)
+    {
+        result = default;
+
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        if (DateTime.TryParseExact(
+                value,
+                "yyyy-MM-dd",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var date))
+        {
+            result = date.Date.AddHours(9);
+            return true;
+        }
+
+        if (DateTime.TryParse(value, out date))
+        {
+            result = date;
+            return true;
+        }
+
+        return false;
+    }
+
+
+    // =========================================
+    // LICENSE UPLOAD
+    // =========================================
+
+    private void OnLicenseSelected(InputFileChangeEventArgs e)
+    {
+        uploadError = null;
+        licenseName = null;
+
+        var file = e.File;
+
+        const long maxSize = 5 * 1024 * 1024;
+
+        if (file.Size > maxSize)
+        {
+            uploadError = "Tệp vượt quá dung lượng 5MB.";
+            return;
+        }
+
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+
+        var allowedExtensions = new[]
+        {
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".pdf"
+        };
+
+        if (!allowedExtensions.Contains(extension))
+        {
+            uploadError = "Chỉ chấp nhận tệp PNG, JPG hoặc PDF.";
+            return;
+        }
+
+        licenseName = file.Name;
+    }
+
+
+    // =========================================
+    // SUBMIT
+    // =========================================
+
+    private async Task Submit()
+    {
+        message = "";
+        uploadError = null;
+
+        if (!CanSubmit)
+        {
+            message = "Thông tin xe hoặc thời gian thuê không hợp lệ.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(licenseName))
+        {
+            uploadError = "Vui lòng tải lên giấy phép lái xe.";
+            return;
+        }
+
+        isSubmitting = true;
+
+        try
+        {
+            /*
+             * TODO:
+             * Kết nối API tạo đơn thuê xe tại đây.
+             *
+             * Dữ liệu hiện có:
+             * - response.Car.Id
+             * - Pickup
+             * - Return
+             * - model.FullName
+             * - model.Phone
+             * - model.Email
+             * - model.Address
+             * - payment
+             * - RentalFee
+             * - ServiceFee
+             * - Deposit
+             * - Total
+             *
+             * File giấy phép hiện mới được chọn ở giao diện,
+             * chưa được upload lên Backend.
+             */
+
+            message = "Thông tin đặt xe đã được kiểm tra. Chức năng tạo đơn thuê chưa được kết nối API.";
+        }
+        catch (Exception ex)
+        {
+            message = "Có lỗi xảy ra: " + ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+
+    // =========================================
+    // FORM MODEL
+    // =========================================
+
+    public class BookingModel
+    {
+        [Required(ErrorMessage = "Vui lòng nhập họ tên.")]
+        public string FullName { get; set; } = "";
+
+        [Required(ErrorMessage = "Vui lòng nhập số điện thoại.")]
+        public string Phone { get; set; } = "";
+
+        [Required(ErrorMessage = "Vui lòng nhập email.")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
+        public string Email { get; set; } = "";
+
+        public string Address { get; set; } = "";
+
+        [Range(typeof(bool), "true", "true",
+            ErrorMessage = "Bạn cần đồng ý với điều khoản.")]
+        public bool Agree { get; set; }
+    }
+}

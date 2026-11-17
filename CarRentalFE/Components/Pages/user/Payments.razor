@@ -4,6 +4,8 @@
 @using CarRentalFE.Components.Layout
 @layout EmptyLayout
 @inject NavigationManager Navigation
+@using CarRentalFE.Services
+@inject AuthService AuthService
 
 <PageTitle>Thanh toán & đặt cọc - RENTO</PageTitle>
 
@@ -52,7 +54,7 @@
                 <a href="/user/account-info">♙ &nbsp; Thông tin cá nhân</a>
             </nav>
 
-            <a href="/login" class="sidebar-logout">
+            <a href="javascript:void(0)" class="sidebar-logout" @onclick="Logout">
                 ⇥ &nbsp; Đăng xuất
             </a>
         </aside>
@@ -174,8 +176,9 @@ StatusClass = "paid"
         public string StatusClass { get; set; } = "";
     }
 
-    private void Logout()
+    private async Task Logout()
     {
-        Navigation.NavigateTo("/login");
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

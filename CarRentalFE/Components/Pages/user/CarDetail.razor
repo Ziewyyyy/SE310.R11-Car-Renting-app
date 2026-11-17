@@ -1,0 +1,464 @@
+@page "/user/cars/{Id:guid}"
+@rendermode InteractiveServer
+@layout UserLayout
+
+@using CarRentalFE.Components.Layout
+@using CarRentalFE.Models
+@using CarRentalFE.Services
+
+@inject CarApiService Api
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+
+<PageTitle>@(response?.Car.Name ?? "Chi tiết xe") - RENTO</PageTitle>
+
+@if (loading)
+{
+    <div class="detail-loading">
+        Đang tải thông tin xe...
+    </div>
+}
+else if (response == null)
+{
+    <div class="detail-loading">
+        <h3>Không tìm thấy xe</h3>
+        <a href="/user/cars">Quay lại danh sách xe</a>
+    </div>
+}
+else
+{
+    var car = response.Car;
+
+    <main class="car-detail-page">
+
+        <div class="detail-container">
+
+            <!-- BREADCRUMB -->
+            <div class="breadcrumb">
+                <a href="/user/cars">Thuê xe</a>
+                <span>/</span>
+                <span>@car.Name</span>
+            </div>
+
+            <!-- BỐ CỤC CHÍNH -->
+            <div class="detail-layout">
+
+                <!-- CỘT TRÁI -->
+                <div class="detail-main">
+
+                    <!-- GALLERY -->
+                    <section class="gallery">
+
+                        <div class="gallery-main">
+
+                            @if (selectedImage != null)
+                            {
+                                <img src="@ImageUrl(selectedImage.Url)" alt="@car.Name" />
+                            }
+                            else
+                            {
+                                <div class="gallery-placeholder">
+                                    <span>🚘</span>
+                                    Chưa có hình ảnh xe
+                                </div>
+                            }
+
+                        </div>
+
+                        <div class="gallery-side">
+
+                            @foreach (var image in response.Images
+                                                    .Where(x => x.Id != selectedImage?.Id)
+                                                    .Take(2))
+                            {
+                                <button class="gallery-thumb" @onclick="() => SelectImage(image)">
+
+                                    <img src="@ImageUrl(image.Url)" alt="@car.Name" />
+
+                                </button>
+                            }
+
+                            @if (response.Images.Count > 3)
+                            {
+                                <div class="gallery-more">
+                                    +@(response.Images.Count - 3) ảnh
+                                </div>
+                            }
+
+                        </div>
+
+                    </section>
+
+                    <!-- THÔNG TIN XE -->
+                    <section class="detail-information">
+
+                        <div class="detail-eyebrow">
+                            @car.Brand.Name · @car.Category.Name
+                        </div>
+
+                        <h1 class="detail-title">
+                            @car.Name
+                        </h1>
+
+                        @if (car.AverageRating.HasValue)
+                        {
+                            <div class="detail-rating">
+                                <span>★</span>
+
+                                @car.AverageRating.Value.ToString("0.0")
+
+                                <small>
+                                    (@car.ReviewCount đánh giá)
+                                </small>
+                            </div>
+                        }
+
+                        <!-- THÔNG SỐ -->
+                        <div class="detail-specifications">
+
+                            <div class="spec-item">
+                                <span>♙</span>
+                                @car.Seats chỗ
+                            </div>
+
+                            <div class="spec-item">
+                                <span>▦</span>
+                                @car.ManufactureYear
+                            </div>
+
+                            <div class="spec-item">
+                                <span>◈</span>
+                                @car.Color
+                            </div>
+
+                            <div class="spec-item">
+                                <span>◎</span>
+                                @car.Mileage.ToString("N0") km
+                            </div>
+
+                        </div>
+
+                        <!-- THÔNG TIN CHI TIẾT -->
+                        <div class="detail-section">
+
+                            <h3>Thông tin xe</h3>
+
+                            <div class="information-grid">
+
+                                <div>
+                                    <small>Hãng xe</small>
+                                    <strong>@car.Brand.Name</strong>
+                                </div>
+
+                                <div>
+                                    <small>Xuất xứ</small>
+                                    <strong>@car.Brand.Country</strong>
+                                </div>
+
+                                <div>
+                                    <small>Loại xe</small>
+                                    <strong>@car.Category.Name</strong>
+                                </div>
+
+                                <div>
+                                    <small>Năm sản xuất</small>
+                                    <strong>@car.ManufactureYear</strong>
+                                </div>
+
+                                <div>
+                                    <small>Số chỗ</small>
+                                    <strong>@car.Seats chỗ</strong>
+                                </div>
+
+                                <div>
+                                    <small>Màu xe</small>
+                                    <strong>@car.Color</strong>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- ĐẶC ĐIỂM -->
+                        <div class="detail-section">
+
+                            <h3>Đặc điểm nổi bật</h3>
+
+                            @if (response.Features.Count > 0)
+                            {
+                                <div class="features-grid">
+
+                                    @foreach (var feature in response.Features)
+                                    {
+                                        <div class="feature-item">
+
+                                            <span>✓</span>
+
+                                            <div>
+                                                <strong>
+                                                    @feature.Name
+                                                </strong>
+
+                                                @if (!string.IsNullOrWhiteSpace(feature.Description))
+                                                {
+                                                    <small>
+                                                        @feature.Description
+                                                    </small>
+                                                }
+                                            </div>
+
+                                        </div>
+                                    }
+
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="empty-features">
+                                    Chưa có thông tin tiện ích cho xe này.
+                                </p>
+                            }
+
+                        </div>
+
+                        <!-- ĐIỀU KIỆN THUÊ -->
+                        <div class="detail-section">
+
+                            <h3>Điều kiện thuê xe</h3>
+
+                            <p>
+                                Vui lòng chuẩn bị giấy tờ tùy thân và giấy phép lái xe
+                                hợp lệ khi nhận xe. Các điều kiện đặt cọc và thuê xe
+                                sẽ được xác nhận trong quá trình đặt xe.
+                            </p>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+                <!-- CỘT PHẢI: BẢNG ĐẶT XE -->
+                <aside class="booking-card">
+
+                    <!-- GIÁ THUÊ -->
+                    <div class="booking-price">
+
+                        <strong>
+                            @car.PricePerDay.ToString("N0") đ
+                        </strong>
+
+                        <span>/ ngày</span>
+
+                    </div>
+
+                    <!-- NGÀY NHẬN -->
+                    <div class="booking-field">
+
+                        <label>Nhận xe</label>
+
+                        <input type="date" @bind="pickupDate" @bind:format="yyyy-MM-dd"
+                            min="@DateTime.Today.ToString("yyyy-MM-dd")" @bind:after="CalculateTotal" />
+
+                    </div>
+
+                    <!-- NGÀY TRẢ -->
+                    <div class="booking-field">
+
+                        <label>Trả xe</label>
+
+                        <input type="date" @bind="returnDate" @bind:format="yyyy-MM-dd"
+                            min="@pickupDate.ToString("yyyy-MM-dd")" @bind:after="CalculateTotal" />
+
+                    </div>
+
+                    <!-- TÍNH TIỀN -->
+                    @if (returnDate <= pickupDate)
+                    {
+                        <div class="booking-error">
+                            Ngày trả xe phải sau ngày nhận xe.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="booking-calculation">
+
+                            <div>
+                                <span>
+                                    @car.PricePerDay.ToString("N0") đ
+                                    × @rentalDays ngày
+                                </span>
+
+                                <strong>
+                                    @totalPrice.ToString("N0") đ
+                                </strong>
+                            </div>
+
+                            <div class="booking-total">
+
+                                <span>
+                                    Chi phí thuê dự kiến
+                                </span>
+
+                                <strong>
+                                    @totalPrice.ToString("N0") đ
+                                </strong>
+
+                            </div>
+
+                        </div>
+                    }
+
+                    <!-- GHI CHÚ -->
+                    <p class="booking-note">
+                        Giá trên chưa bao gồm các khoản phí phát sinh
+                        hoặc tiền đặt cọc (nếu có).
+                    </p>
+
+                    <!-- TRẠNG THÁI -->
+                    <div class="booking-status">
+
+                        <span class="status-dot"></span>
+
+                        @StatusText(car.Status)
+
+                    </div>
+
+                    <!-- BUTTON -->
+                    <button class="booking-btn" disabled="@(car.Status != "Available" || returnDate <= pickupDate)"
+                        @onclick="StartBooking">
+
+                        Đặt xe <span>›</span>
+
+                    </button>
+
+                    @if (!string.IsNullOrWhiteSpace(bookingMessage))
+                    {
+                        <p class="booking-message">
+                            @bookingMessage
+                        </p>
+                    }
+
+                </aside>
+
+            </div>
+
+        </div>
+
+    </main>
+}
+
+@code {
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private CarDetailResponse? response;
+    private CarImageItem? selectedImage;
+
+    private bool loading = true;
+
+    private DateTime pickupDate = DateTime.Today.AddDays(1);
+    private DateTime returnDate = DateTime.Today.AddDays(4);
+
+    private int rentalDays = 3;
+    private decimal totalPrice;
+
+    private string? bookingMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true;
+        bookingMessage = null;
+
+        try
+        {
+            response = await Api.GetCarAsync(Id);
+
+            if (response != null)
+            {
+                selectedImage = response.Images
+                .FirstOrDefault(x => x.IsPrimary)
+                ?? response.Images.FirstOrDefault();
+
+                CalculateTotal();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            response = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void SelectImage(CarImageItem image)
+    {
+        selectedImage = image;
+    }
+
+    private void CalculateTotal()
+    {
+        rentalDays = Math.Max(
+        0,
+        (returnDate.Date - pickupDate.Date).Days
+        );
+
+        totalPrice = response == null
+        ? 0
+        : response.Car.PricePerDay * rentalDays;
+    }
+
+    private string ImageUrl(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return "";
+
+        if (Uri.TryCreate(path, UriKind.Absolute, out var absolute))
+            return absolute.ToString();
+
+        var baseUrl = Configuration["Api:BaseUrl"]
+        ?? "http://localhost:5110/";
+
+        return new Uri(
+        new Uri(baseUrl),
+        path.TrimStart('/')
+        ).ToString();
+    }
+
+    private static string StatusText(string status) => status switch
+    {
+        "Available" => "Sẵn sàng cho thuê",
+        "Rented" => "Đang cho thuê",
+        "Maintenance" => "Đang bảo trì",
+        _ => "Không khả dụng"
+    };
+
+    private void StartBooking()
+    {
+        if (response?.Car == null)
+            return;
+
+        if (returnDate <= pickupDate)
+        {
+            bookingMessage = "Ngày trả xe phải sau ngày nhận xe.";
+            return;
+        }
+
+        if (pickupDate.Date < DateTime.Today)
+        {
+            bookingMessage = "Ngày nhận xe không hợp lệ.";
+            return;
+        }
+
+        var url = $"/user/confirm?carId={Id}"
+        + $"&pickupDate={pickupDate:yyyy-MM-dd}"
+        + $"&returnDate={returnDate:yyyy-MM-dd}";
+
+        Navigation.NavigateTo(url);
+    }
+
+}

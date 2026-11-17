@@ -31,8 +31,9 @@
         else
         {
             var car = Data.Car;
-            var photos = Data.Images.Where(i => i.Url.StartsWith("http", StringComparison.OrdinalIgnoreCase)).ToList();
-
+            var photos = Data.Images
+            .Where(i => !string.IsNullOrWhiteSpace(i.Url))
+            .ToList();
             <div class="breadcrumb">
                 <a href="/cars">Thuê xe</a><span>/</span><b>@car.Name</b>
             </div>
@@ -41,12 +42,20 @@
                 @if (photos.Count > 0)
                 {
                     <img class="gallery-main" src="@photos[0].Url" alt="@car.Name" />
-                    @if (photos.Count > 1) { <img src="@photos[1].Url" alt="Ảnh xe @car.Name" /> }
-                    @if (photos.Count > 2) { <img src="@photos[2].Url" alt="Ảnh xe @car.Name" /> }
+                    @if (photos.Count > 1)
+                    {
+                        <img src="@photos[1].Url" alt="Ảnh xe @car.Name" />
+                    }
+                    @if (photos.Count > 2)
+                    {
+                        <img src="@photos[2].Url" alt="Ảnh xe @car.Name" />
+                    }
                 }
                 else
                 {
-                    <div class="gallery-main img-fallback" style="grid-column: 1 / -1; grid-row: 1 / -1;"><Icon Name="car" Size="72" /></div>
+                    <div class="gallery-main img-fallback" style="grid-column: 1 / -1; grid-row: 1 / -1;">
+                        <Icon Name="car" Size="72" />
+                    </div>
                 }
             </div>
 
@@ -56,13 +65,24 @@
                     <div class="detail-title">@car.Name</div>
                     @if (car.AverageRating != null)
                     {
-                        <div class="rating"><Icon Name="star" Size="16" /> @car.AverageRating.Value.ToString("0.0") <small>(@car.ReviewCount đánh giá)</small></div>
+                        <div class="rating">
+                            <Icon Name="star" Size="16" /> @car.AverageRating.Value.ToString("0.0") <small>(@car.ReviewCount
+                                đánh giá)</small>
+                        </div>
                     }
                     <div class="detail-specs">
-                        <span><Icon Name="user" />@car.Seats chỗ</span>
-                        <span><Icon Name="calendar" />Đời @car.ManufactureYear</span>
-                        <span><Icon Name="car" />Màu @car.Color</span>
-                        <span><Icon Name="clock" />@car.Mileage.ToString("N0") km</span>
+                        <span>
+                            <Icon Name="user" />@car.Seats chỗ
+                        </span>
+                        <span>
+                            <Icon Name="calendar" />Đời @car.ManufactureYear
+                        </span>
+                        <span>
+                            <Icon Name="car" />Màu @car.Color
+                        </span>
+                        <span>
+                            <Icon Name="clock" />@car.Mileage.ToString("N0") km
+                        </span>
                     </div>
 
                     <div class="content-block">
@@ -102,20 +122,31 @@
 
                     <label class="field">
                         <span>Nhận xe</span>
-                        <div class="field-box"><Icon Name="calendar" Size="18" /><input type="date" @bind="Pickup" @bind:format="yyyy-MM-dd" min="@DateTime.Today.ToString("yyyy-MM-dd")" /></div>
+                        <div class="field-box">
+                            <Icon Name="calendar" Size="18" /><input type="date" @bind="Pickup" @bind:format="yyyy-MM-dd"
+                                min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
                     </label>
                     <label class="field">
                         <span>Trả xe</span>
-                        <div class="field-box"><Icon Name="calendar" Size="18" /><input type="date" @bind="Return" @bind:format="yyyy-MM-dd" min="@Pickup.AddDays(1).ToString("yyyy-MM-dd")" /></div>
+                        <div class="field-box">
+                            <Icon Name="calendar" Size="18" /><input type="date" @bind="Return" @bind:format="yyyy-MM-dd"
+                                min="@Pickup.AddDays(1).ToString("yyyy-MM-dd")" />
+                        </div>
                     </label>
 
-                    <div class="cost-line"><span>@car.PricePerDay.ToString("N0", Vi) ₫ × @Days ngày</span><b>@Total.ToString("N0", Vi) ₫</b></div>
+                    <div class="cost-line"><span>@car.PricePerDay.ToString("N0", Vi) ₫ × @Days
+                            ngày</span><b>@Total.ToString("N0", Vi) ₫</b></div>
                     <div class="cost-total"><span>Chi phí dự kiến</span><b>@Total.ToString("N0", Vi) ₫</b></div>
                     <small>Chưa bao gồm khoản đặt cọc có thể hoàn lại.</small>
 
                     @if (car.Status == "Available")
                     {
-                        <a class="btn btn-primary w-full" href="/checkout?carId=@car.Id&pickup=@Pickup.ToString("yyyy-MM-dd")&return=@Return.ToString("yyyy-MM-dd")">Đặt xe <Icon Name="arrow" /></a>
+                        <a class="btn btn-primary w-full"
+                            href="/checkout?carId=@car.Id&pickup=@Pickup.ToString("yyyy-MM-dd")&return=@Return.ToString("yyyy-MM-dd")">Đặt
+                            xe
+                            <Icon Name="arrow" />
+                        </a>
                     }
                     else
                     {
@@ -127,7 +158,9 @@
             @if (Related.Count > 0)
             {
                 <section class="related">
-                    <div class="section-title"><div class="section-heading">Có thể bạn cũng thích</div></div>
+                    <div class="section-title">
+                        <div class="section-heading">Có thể bạn cũng thích</div>
+                    </div>
                     <div class="vehicle-grid">
                         @foreach (var r in Related)
                         {

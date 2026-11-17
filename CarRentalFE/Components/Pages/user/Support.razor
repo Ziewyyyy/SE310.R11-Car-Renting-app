@@ -2,6 +2,8 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.Forms
 @using CarRentalFE.Components.Layout
+@using CarRentalFE.Services
+@inject AuthService AuthService
 @layout EmptyLayout
 @inject NavigationManager Navigation
 
@@ -52,9 +54,11 @@
                 <a href="/user/account-info">♙ &nbsp; Thông tin cá nhân</a>
             </nav>
 
-            <a href="/login" class="sidebar-logout">
-                ⇥ &nbsp; Đăng xuất
-            </a>
+            private async Task Logout()
+            {
+            await AuthService.LogoutAsync();
+            Navigation.NavigateTo("/login", forceLoad: true);
+            }
         </aside>
 
         <main class="rentals-main">
@@ -260,8 +264,9 @@ UpdatedAt = "18/05/2025"
         public string UpdatedAt { get; set; } = "";
     }
 
-    private void Logout()
+    private async Task Logout()
     {
-        Navigation.NavigateTo("/login");
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

@@ -3,6 +3,10 @@
 @using System.Linq
 @using CarRentalFE.Components.Layout
 @layout EmptyLayout
+
+@using CarRentalFE.Services
+@inject AuthService AuthService
+
 @inject NavigationManager Navigation
 
 <PageTitle>Đơn thuê của tôi - RENTO</PageTitle>
@@ -16,9 +20,9 @@
 
         <nav class="rento-nav">
             <a href="/">Trang chủ</a>
-            <a href="/cars">Thuê xe</a>
-            <a href="/guide">Hướng dẫn thuê xe</a>
-            <a href="/support">Hỗ trợ</a>
+            <a href="/user/cars">Thuê xe</a>
+            <a href="/user/guide">Hướng dẫn thuê xe</a>
+            <a href="/user/support">Hỗ trợ</a>
         </nav>
 
         <div class="header-user">
@@ -52,7 +56,7 @@
                 <a href="/user/account-info">♙ &nbsp; Thông tin cá nhân</a>
             </nav>
 
-            <a href="/login" class="sidebar-logout">
+            <a href="javascript:void(0)" class="sidebar-logout" @onclick="Logout">
                 ⇥ &nbsp; Đăng xuất
             </a>
         </aside>
@@ -65,7 +69,12 @@
 
             <div class="rento-stats">
                 <div class="stat-card">
-                    <span class="stat-icon">▤</span>
+                    <span class="stat-icon">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="5" y="3" width="14" height="18" rx="2" />
+                            <path d="M8 8h8M8 12h8M8 16h5" />
+                        </svg>
+                    </span>
                     <div>
                         <small>Tổng đơn thuê</small>
                         <strong>08</strong>
@@ -73,7 +82,15 @@
                 </div>
 
                 <div class="stat-card">
-                    <span class="stat-icon">🚘</span>
+                    <span class="stat-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 13l2-6h14l2 6" />
+                            <path d="M3 13h18v5H3z" />
+                            <path d="M6 18v2M18 18v2" />
+                            <circle cx="7" cy="15.5" r="1" />
+                            <circle cx="17" cy="15.5" r="1" />
+                        </svg>
+                    </span>
                     <div>
                         <small>Đang thuê</small>
                         <strong>01</strong>
@@ -81,7 +98,12 @@
                 </div>
 
                 <div class="stat-card">
-                    <span class="stat-icon">◷</span>
+                    <span class="stat-icon">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 7v5l3 2" />
+                        </svg>
+                    </span>
                     <div>
                         <small>Chờ xác nhận</small>
                         <strong>01</strong>
@@ -89,21 +111,18 @@
                 </div>
 
                 <div class="stat-card">
-                    <span class="stat-icon">⌖</span>
+                    <span class="stat-icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 17l6-6 4 4 8-9" />
+                            <path d="M15 6h6v6" />
+                            <path d="M4 21h16" />
+                        </svg>
+                    </span>
                     <div>
                         <small>Tổng hành trình</small>
                         <strong>2.840 km</strong>
                     </div>
                 </div>
-            </div>
-
-            <div class="rento-tabs">
-                @foreach (var status in StatusTabs)
-                {
-                    <button class="@(SelectedStatus == status ? "active" : "")" @onclick="() => SelectStatus(status)">
-                        @status
-                    </button>
-                }
             </div>
 
             <div class="rento-toolbar">
@@ -201,6 +220,7 @@
 new()
 {
 Id = "#RT250622-0186",
+CarId = "bmw-430i",
 CarName = "BMW 430i M Sport",
 DateText = "22/06 – 25/06/2025",
 StartDate = new DateTime(2025, 6, 22),
@@ -212,6 +232,7 @@ Image = "https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400"
 new()
 {
 Id = "#RT250515-0094",
+CarId = "audi-q7",
 CarName = "Audi Q7 Premium",
 DateText = "15/05 – 18/05/2025",
 StartDate = new DateTime(2025, 5, 15),
@@ -223,6 +244,7 @@ Image = "https://images.unsplash.com/photo-1541348263662-e068662d82af?w=400"
 new()
 {
 Id = "#RT250402-0041",
+CarId = "porsche-panamera",
 CarName = "Porsche Panamera 4S",
 DateText = "02/04 – 04/04/2025",
 StartDate = new DateTime(2025, 4, 2),
@@ -260,6 +282,7 @@ Image = "https://images.unsplash.com/photo-1601929862217-f1bf94503333?w=400"
     {
         public string Id { get; set; } = "";
         public string CarName { get; set; } = "";
+        public string CarId { get; set; } = "";
         public string DateText { get; set; } = "";
         public DateTime StartDate { get; set; }
         public decimal Price { get; set; }
@@ -268,8 +291,12 @@ Image = "https://images.unsplash.com/photo-1601929862217-f1bf94503333?w=400"
         public string Image { get; set; } = "";
     }
 
-    private void Logout()
+    private async Task Logout()
     {
-        Navigation.NavigateTo("/login");
+        // Xóa JWT Token và thông tin người dùng
+        await AuthService.LogoutAsync();
+
+        // Chuyển về trang đăng nhập và tải lại ứng dụng
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

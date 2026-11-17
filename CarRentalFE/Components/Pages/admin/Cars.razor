@@ -1,7 +1,9 @@
 @page "/admin/cars"
 @layout AdminLayout
 @using System.ComponentModel.DataAnnotations
+@using System.Net.Http.Json
 @using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient Http
 
 <PageTitle>Quản lý xe | RENTO</PageTitle>
 
@@ -10,78 +12,58 @@
         <div>
             <div class="cars-eyebrow">QUẢN LÝ PHƯƠNG TIỆN</div>
             <h1>Đội xe RENTO</h1>
-            <p>Theo dõi và quản lý 128 phương tiện trong hệ thống.</p>
+            <p>Theo dõi và quản lý @total phương tiện trong hệ thống.</p>
         </div>
-
         <button class="cars-primary-button" type="button" @onclick="OpenAddModal">
             <span>＋</span> Thêm xe mới
         </button>
     </div>
 
     <div class="cars-tabs">
-        <button class="cars-tab @(activeTab == "list" ? "active" : "")" @onclick='() => SetTab("list")'>
-            Danh sách xe
-        </button>
-
-        <button class="cars-tab @(activeTab == "lookup" ? "active" : "")" @onclick='() => SetTab("lookup")'>
-            Tra cứu xe
-        </button>
-
-        <button class="cars-tab @(activeTab == "types" ? "active" : "")" @onclick='() => SetTab("types")'>
-            Loại xe
-        </button>
-
-        <button class="cars-tab @(activeTab == "brands" ? "active" : "")" @onclick='() => SetTab("brands")'>
-            Hãng xe
-        </button>
+        <button class="cars-tab @(activeTab == "list" ? "active" : "")" @onclick='() => activeTab = "list"'>Danh sách xe</button>
+        <button class="cars-tab @(activeTab == "types" ? "active" : "")" @onclick='() => activeTab = "types"'>Loại xe</button>
+        <button class="cars-tab @(activeTab == "brands" ? "active" : "")" @onclick='() => activeTab = "brands"'>Hãng xe</button>
     </div>
 
-    @if (activeTab == "list" || activeTab == "lookup")
+    @if (activeTab == "list")
     {
         <section class="cars-table-card">
             <div class="cars-toolbar">
                 <div class="cars-toolbar-left">
                     <label class="cars-search">
                         <span>⌕</span>
-                        <input placeholder="Tìm xe, biển số..." @bind="searchText" @bind:event="oninput" />
+                        <input placeholder="Tìm xe, biển số... (Enter)" @bind="searchText" @bind:after="ApplyFilter" />
                     </label>
 
                     <label class="cars-select-wrap">
                         <span>Hãng</span>
-                        <select @bind="selectedBrand">
-                            <option value="Tất cả hãng">Tất cả hãng</option>
-                            @foreach (var brand in brands)
+                        <select @bind="selectedBrandId" @bind:after="ApplyFilter">
+                            <option value="">Tất cả hãng</option>
+                            @foreach (var b in brands)
                             {
-                                <option value="@brand">@brand</option>
+                                <option value="@b.Id">@b.Name</option>
                             }
                         </select>
                     </label>
 
                     <label class="cars-select-wrap">
                         <span>Trạng thái</span>
-                        <select @bind="selectedStatus">
-                            <option value="Mọi trạng thái">Mọi trạng thái</option>
-                            <option value="Sẵn sàng">Sẵn sàng</option>
-                            <option value="Đang cho thuê">Đang cho thuê</option>
-                            <option value="Bảo trì">Bảo trì</option>
-                            <option value="Hư hỏng">Hư hỏng</option>
+                        <select @bind="selectedStatus" @bind:after="ApplyFilter">
+                            <option value="">Mọi trạng thái</option>
+                            @foreach (var s in StatusMap)
+                            {
+                                <option value="@s.Key">@s.Value.Label</option>
+                            }
                         </select>
                     </label>
                 </div>
-
-                <button class="cars-filter-button" type="button" @onclick="ClearFilters">
-                    <span>▽</span> Bỏ lọc
-                </button>
+                <button class="cars-filter-button" type="button" @onclick="ClearFilters"><span>▽</span> Bỏ lọc</button>
             </div>
 
             <div class="cars-table-scroll">
                 <table class="cars-table">
                     <thead>
                         <tr>
-                            <th class="check-column">
-                                <input type="checkbox" checked="@AllVisibleSelected" @onchange="ToggleSelectAll"
-                                    aria-label="Chọn tất cả xe" />
-                            </th>
                             <th>PHƯƠNG TIỆN</th>
                             <th>BIỂN SỐ</th>
                             <th>HÃNG / LOẠI</th>
@@ -91,94 +73,71 @@
                             <th></th>
                         </tr>
                     </thead>
-
                     <tbody>
-                        @foreach (var car in PagedCars)
+                        @if (loading)
                         {
-                            <tr>
-                                <td class="check-column">
-                                    <input type="checkbox" checked="@selectedIds.Contains(car.Id)"
-                                        @onchange="e => ToggleOne(car.Id, e)" aria-label="Chọn @car.Name" />
-                                </td>
-
-                                <td>
-                                    <div class="car-name-cell">
-                                        <div class="car-thumb @car.ThumbClass">
-                                            @if (!string.IsNullOrEmpty(car.Image))
-                                            {
-                                                <img src="@car.Image" alt="@car.Name" />
-                                            }
-                                            else
-                                            {
-                                                <span>@car.Icon</span>
-                                            }
-                                        </div>
-                                        <strong>@car.Name</strong>
-                                    </div>
-                                </td>
-
-                                <td class="plate-cell">@car.Plate</td>
-
-                                <td>
-                                    <strong class="brand-name">@car.Brand</strong>
-                                    <small class="car-type">@car.Type</small>
-                                </td>
-
-                                <td>@car.Kilometers.ToString("N0") km</td>
-
-                                <td class="car-price">
-                                    @car.Price.ToString("N0") ₫
-                                </td>
-
-                                <td>
-                                    <span class="car-status @car.StatusClass">
-                                        <i></i>@car.Status
-                                    </span>
-                                </td>
-
-                                <td class="car-more">
-                                    <button type="button" title="Tùy chọn" @onclick="() => ShowCarAction(car)">
-                                        ···
-                                    </button>
-                                </td>
-                            </tr>
+                            <tr><td colspan="7" class="cars-empty">Đang tải...</td></tr>
                         }
-
-                        @if (!FilteredCars.Any())
+                        else
                         {
-                            <tr>
-                                <td colspan="8" class="cars-empty">
-                                    Không tìm thấy phương tiện phù hợp.
-                                </td>
-                            </tr>
+                            @foreach (var car in cars)
+                            {
+                                var st = StatusInfo(car.Status);
+                                <tr>
+                                    <td>
+                                        <div class="car-name-cell">
+                                            <div class="car-thumb">
+                                                @if (!string.IsNullOrEmpty(car.PrimaryImage))
+                                                {
+                                                    <img src="@car.PrimaryImage" alt="@car.Name" />
+                                                }
+                                                else
+                                                {
+                                                    <span>🚗</span>
+                                                }
+                                            </div>
+                                            <strong>@car.Name</strong>
+                                        </div>
+                                    </td>
+                                    <td class="plate-cell">@car.LicensePlate</td>
+                                    <td>
+                                        <strong class="brand-name">@car.BrandName</strong>
+                                        <small class="car-type">@car.CategoryName</small>
+                                    </td>
+                                    <td>@car.Mileage.ToString("N0") km</td>
+                                    <td class="car-price">@car.PricePerDay.ToString("N0") ₫</td>
+                                    <td>
+                                        <span class="car-status @st.Css"><i></i>@st.Label</span>
+                                    </td>
+                                    <td class="car-more">
+                                        <button type="button" title="Sửa" @onclick="() => OpenEditModal(car)">✎</button>
+                                        @if (car.Status != "Inactive")
+                                        {
+                                            <button type="button" title="Ngừng hoạt động" @onclick="() => AskDelete(car)">🗑</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+
+                            @if (!cars.Any())
+                            {
+                                <tr><td colspan="7" class="cars-empty">Không tìm thấy phương tiện phù hợp.</td></tr>
+                            }
                         }
                     </tbody>
                 </table>
             </div>
 
             <div class="cars-table-footer">
-                <span>
-                    Đã chọn @selectedIds.Count ·
-                    Hiển thị @PagedCars.Count() trong @FilteredCars.Count() xe
-                </span>
-
+                <span>Hiển thị @cars.Count trong @total xe</span>
                 <div class="cars-pagination">
-                    <button disabled="@(currentPage == 1)" @onclick="PreviousPage">
-                        ‹
-                    </button>
-
-                    @for (var page = 1; page <= TotalPages; page++)
+                    <button disabled="@(currentPage == 1)" @onclick="() => GoToPage(currentPage - 1)">‹</button>
+                    @for (var p = 1; p <= TotalPages; p++)
                     {
-                        var pageNumber = page;
-
-                        <button class="@(currentPage == pageNumber ? "current" : "")" @onclick="() => GoToPage(pageNumber)">
-                            @pageNumber
-                        </button>
+                        var n = p;
+                        <button class="@(currentPage == n ? "current" : "")" @onclick="() => GoToPage(n)">@n</button>
                     }
-
-                    <button disabled="@(currentPage == TotalPages)" @onclick="NextPage">
-                        ›
-                    </button>
+                    <button disabled="@(currentPage == TotalPages)" @onclick="() => GoToPage(currentPage + 1)">›</button>
                 </div>
             </div>
         </section>
@@ -191,30 +150,33 @@
                     <h2>Danh mục loại xe</h2>
                     <p>Phân loại phương tiện đang kinh doanh tại RENTO.</p>
                 </div>
-
-                <button class="cars-outline-button" type="button" @onclick="ShowAddTypeInfo">
+                <button class="cars-outline-button" type="button" @onclick='() => OpenCatalogModal("category", null)'>
                     ＋ Thêm loại xe
                 </button>
             </div>
-
             <div class="cars-category-grid">
-                @foreach (var type in vehicleTypes)
+                @foreach (var t in categories)
                 {
                     <article class="cars-category-card">
                         <span class="category-icon">▣</span>
-
                         <div>
-                            <strong>@type.Name</strong>
-                            <small>@type.Count phương tiện</small>
+                            <strong>@t.Name</strong>
+                            <small>@t.CarCount phương tiện@(string.IsNullOrWhiteSpace(t.Description) ? "" : " · " + t.Description)</small>
                         </div>
-
-                        <span class="category-arrow">›</span>
+                        <span class="category-arrow">
+                            <button type="button" title="Sửa" @onclick='() => OpenCatalogModal("category", t.Id)'>✎</button>
+                            <button type="button" title="Xóa" @onclick='() => AskDeleteCatalog("category", t.Id, t.Name)'>🗑</button>
+                        </span>
                     </article>
+                }
+                @if (!categories.Any())
+                {
+                    <p class="cars-empty">Chưa có loại xe nào.</p>
                 }
             </div>
         </section>
     }
-    else if (activeTab == "brands")
+    else
     {
         <section class="cars-management-panel">
             <div class="cars-management-heading">
@@ -222,26 +184,25 @@
                     <h2>Danh mục hãng xe</h2>
                     <p>Các thương hiệu xe có trong hệ thống.</p>
                 </div>
-
-                <button class="cars-outline-button" type="button" @onclick="ShowAddBrandInfo">
+                <button class="cars-outline-button" type="button" @onclick='() => OpenCatalogModal("brand", null)'>
                     ＋ Thêm hãng xe
                 </button>
             </div>
-
             <div class="cars-brand-list">
-                @foreach (var brand in brandSummaries)
+                @foreach (var b in brands)
                 {
                     <div class="cars-brand-row">
-                        <div class="brand-logo">@brand.Initial</div>
-
-                        <strong>@brand.Name</strong>
-
-                        <span>@brand.Count xe</span>
-
-                        <button type="button" @onclick="() => ShowCarsOfBrand(brand.Name)">
-                            Xem xe ›
-                        </button>
+                        <div class="brand-logo">@(b.Name.Length > 0 ? b.Name[..1] : "?")</div>
+                        <strong>@b.Name</strong>
+                        <span>@(string.IsNullOrWhiteSpace(b.Country) ? "" : b.Country + " · ")@b.CarCount xe</span>
+                        <button type="button" @onclick="() => ShowCarsOfBrand(b.Id)">Xem xe ›</button>
+                        <button type="button" title="Sửa" @onclick='() => OpenCatalogModal("brand", b.Id)'>✎</button>
+                        <button type="button" title="Xóa" @onclick='() => AskDeleteCatalog("brand", b.Id, b.Name)'>🗑</button>
                     </div>
+                }
+                @if (!brands.Any())
+                {
+                    <p class="cars-empty">Chưa có hãng xe nào.</p>
                 }
             </div>
         </section>
@@ -252,96 +213,107 @@
 {
     <div class="cars-toast">
         @notice
-
-        <button type="button" @onclick="ClearNotice">
-            ×
-        </button>
+        <button type="button" @onclick='() => notice = ""'>×</button>
     </div>
 }
 
-@if (showAddModal)
+@* ===== Modal thêm / sửa ===== *@
+@if (showModal)
 {
-    <div class="cars-modal-backdrop" @onclick="CloseAddModal">
+    <div class="cars-modal-backdrop" @onclick="CloseModal">
         <div class="cars-modal" @onclick:stopPropagation="true">
             <div class="cars-modal-header">
                 <div>
-                    <h2>Thêm xe mới</h2>
+                    <h2>@(editingId == null ? "Thêm xe mới" : "Cập nhật xe")</h2>
                     <p>Nhập thông tin phương tiện vào hệ thống.</p>
                 </div>
-
-                <button type="button" @onclick="CloseAddModal">×</button>
+                <button type="button" @onclick="CloseModal">×</button>
             </div>
 
-            <EditForm Model="newCar" OnValidSubmit="AddCar">
+            <EditForm Model="form" OnValidSubmit="SaveCar">
                 <DataAnnotationsValidator />
 
                 <div class="cars-modal-grid">
                     <div class="cars-modal-field">
                         <label>Tên xe *</label>
-                        <InputText class="cars-modal-input" @bind-Value="newCar.Name" placeholder="Ví dụ: Honda City RS" />
-                        <ValidationMessage For="() => newCar.Name" />
+                        <InputText class="cars-modal-input" @bind-Value="form.Name" placeholder="Ví dụ: Honda City RS" />
+                        <ValidationMessage For="() => form.Name" />
                     </div>
-
                     <div class="cars-modal-field">
                         <label>Biển số *</label>
-                        <InputText class="cars-modal-input" @bind-Value="newCar.Plate" placeholder="51A-123.45" />
-                        <ValidationMessage For="() => newCar.Plate" />
+                        <InputText class="cars-modal-input" @bind-Value="form.LicensePlate" placeholder="51A-123.45" />
+                        <ValidationMessage For="() => form.LicensePlate" />
                     </div>
-
                     <div class="cars-modal-field">
                         <label>Hãng xe *</label>
-                        <InputText class="cars-modal-input" @bind-Value="newCar.Brand" placeholder="Toyota" />
-                        <ValidationMessage For="() => newCar.Brand" />
+                        <InputSelect class="cars-modal-input" @bind-Value="form.BrandId">
+                            <option value="@Guid.Empty">-- Chọn hãng --</option>
+                            @foreach (var b in brands) { <option value="@b.Id">@b.Name</option> }
+                        </InputSelect>
+                        <ValidationMessage For="() => form.BrandId" />
                     </div>
-
                     <div class="cars-modal-field">
-                        <label>Loại xe</label>
-                        <InputText class="cars-modal-input" @bind-Value="newCar.Type" placeholder="Sedan" />
+                        <label>Loại xe *</label>
+                        <InputSelect class="cars-modal-input" @bind-Value="form.CategoryId">
+                            <option value="@Guid.Empty">-- Chọn loại --</option>
+                            @foreach (var c in categories) { <option value="@c.Id">@c.Name</option> }
+                        </InputSelect>
+                        <ValidationMessage For="() => form.CategoryId" />
                     </div>
-
+                    <div class="cars-modal-field">
+                        <label>Năm sản xuất *</label>
+                        <InputNumber class="cars-modal-input" @bind-Value="form.ManufactureYear" />
+                        <ValidationMessage For="() => form.ManufactureYear" />
+                    </div>
+                    <div class="cars-modal-field">
+                        <label>Màu sắc</label>
+                        <InputText class="cars-modal-input" @bind-Value="form.Color" />
+                    </div>
+                    <div class="cars-modal-field">
+                        <label>Số chỗ *</label>
+                        <InputNumber class="cars-modal-input" @bind-Value="form.Seats" />
+                        <ValidationMessage For="() => form.Seats" />
+                    </div>
                     <div class="cars-modal-field">
                         <label>Số km</label>
-                        <InputNumber class="cars-modal-input" @bind-Value="newCar.Kilometers" />
+                        <InputNumber class="cars-modal-input" @bind-Value="form.Mileage" />
+                        <ValidationMessage For="() => form.Mileage" />
                     </div>
-
                     <div class="cars-modal-field">
-                        <label>Giá thuê / ngày (₫)</label>
-                        <InputNumber class="cars-modal-input" @bind-Value="newCar.Price" />
+                        <label>Giá thuê / ngày (₫) *</label>
+                        <InputNumber class="cars-modal-input" @bind-Value="form.PricePerDay" />
+                        <ValidationMessage For="() => form.PricePerDay" />
+                    </div>
+                    <div class="cars-modal-field">
+                        <label>Trạng thái</label>
+                        <InputSelect class="cars-modal-input" @bind-Value="form.Status">
+                            @foreach (var s in StatusMap) { <option value="@s.Key">@s.Value.Label</option> }
+                        </InputSelect>
                     </div>
 
                     <div class="cars-modal-field cars-image-field">
-                        <label>Ảnh phương tiện *</label>
-
+                        <label>Ảnh phương tiện</label>
                         <InputFile class="cars-file-input" accept="image/*" OnChange="OnImageSelected" />
-
                         @if (!string.IsNullOrEmpty(imagePreview))
                         {
                             <div class="cars-image-preview">
                                 <img src="@imagePreview" alt="Ảnh xe xem trước" />
-
-                                <button type="button" class="cars-remove-image" @onclick="RemoveImage">
-                                    ×
-                                </button>
+                                <button type="button" class="cars-remove-image" @onclick="RemoveImage">×</button>
                             </div>
                         }
                         else
                         {
                             <div class="cars-upload-placeholder">
-                                <span>＋</span>
-                                <strong>Chọn ảnh xe</strong>
-                                <small>PNG, JPG hoặc WEBP</small>
+                                <span>＋</span><strong>Chọn ảnh xe</strong><small>PNG, JPG hoặc WEBP</small>
                             </div>
                         }
                     </div>
                 </div>
 
                 <div class="cars-modal-footer">
-                    <button type="button" class="cars-cancel-button" @onclick="CloseAddModal">
-                        Hủy
-                    </button>
-
-                    <button type="submit" class="cars-primary-button">
-                        Thêm xe
+                    <button type="button" class="cars-cancel-button" @onclick="CloseModal" disabled="@saving">Hủy</button>
+                    <button type="submit" class="cars-primary-button" disabled="@saving">
+                        @(saving ? "Đang lưu..." : editingId == null ? "Thêm xe" : "Lưu thay đổi")
                     </button>
                 </div>
             </EditForm>
@@ -349,298 +321,416 @@
     </div>
 }
 
+@* ===== Modal xác nhận xóa ===== *@
+@if (carToDelete != null)
+{
+    <div class="cars-modal-backdrop" @onclick="() => carToDelete = null">
+        <div class="cars-modal" @onclick:stopPropagation="true">
+            <div class="cars-modal-header">
+                <div>
+                    <h2>Ngừng hoạt động xe?</h2>
+                    <p>@carToDelete.Name (@carToDelete.LicensePlate) sẽ chuyển sang trạng thái "Ngừng hoạt động".</p>
+                </div>
+            </div>
+            <div class="cars-modal-footer">
+                <button type="button" class="cars-cancel-button" @onclick="() => carToDelete = null">Hủy</button>
+                <button type="button" class="cars-primary-button" @onclick="ConfirmDelete" disabled="@saving">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ===== Modal thêm / sửa hãng xe, loại xe ===== *@
+@if (showCatalogModal)
+{
+    <div class="cars-modal-backdrop" @onclick="() => showCatalogModal = false">
+        <div class="cars-modal" @onclick:stopPropagation="true">
+            <div class="cars-modal-header">
+                <div>
+                    <h2>@(catalogEditingId == null ? "Thêm" : "Cập nhật") @CatalogTitle</h2>
+                </div>
+                <button type="button" @onclick="() => showCatalogModal = false">×</button>
+            </div>
+
+            <div class="cars-modal-grid">
+                <div class="cars-modal-field">
+                    <label>Tên @CatalogTitle *</label>
+                    <input class="cars-modal-input" @bind="catalogName" @bind:event="oninput" />
+                </div>
+                <div class="cars-modal-field">
+                    <label>@(catalogKind == "brand" ? "Quốc gia" : "Mô tả")</label>
+                    <input class="cars-modal-input" @bind="catalogExtra" @bind:event="oninput" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(catalogError))
+            {
+                <p style="color:#d33;margin:8px 0 0">@catalogError</p>
+            }
+
+            <div class="cars-modal-footer">
+                <button type="button" class="cars-cancel-button" @onclick="() => showCatalogModal = false" disabled="@saving">Hủy</button>
+                <button type="button" class="cars-primary-button" @onclick="SaveCatalog" disabled="@saving">
+                    @(saving ? "Đang lưu..." : "Lưu")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (catalogToDelete != null)
+{
+    <div class="cars-modal-backdrop" @onclick="() => catalogToDelete = null">
+        <div class="cars-modal" @onclick:stopPropagation="true">
+            <div class="cars-modal-header">
+                <div>
+                    <h2>Xóa @(catalogToDelete.Value.Kind == "brand" ? "hãng xe" : "loại xe")?</h2>
+                    <p>"@catalogToDelete.Value.Name" sẽ bị xóa. Chỉ xóa được khi chưa có xe nào thuộc mục này.</p>
+                </div>
+            </div>
+            <div class="cars-modal-footer">
+                <button type="button" class="cars-cancel-button" @onclick="() => catalogToDelete = null">Hủy</button>
+                <button type="button" class="cars-primary-button" @onclick="ConfirmDeleteCatalog" disabled="@saving">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+    private const int PageSize = 8;
+
+    private static readonly Dictionary<string, (string Label, string Css)> StatusMap = new()
+    {
+        ["Available"] = ("Sẵn sàng", "available"),
+        ["Rented"] = ("Đang cho thuê", "renting"),
+        ["Maintenance"] = ("Bảo trì", "maintenance"),
+        ["Inactive"] = ("Ngừng hoạt động", "broken"),
+    };
+
+    private static (string Label, string Css) StatusInfo(string s) =>
+        StatusMap.TryGetValue(s, out var v) ? v : (s, "");
+
     private string activeTab = "list";
     private string searchText = "";
-    private string selectedBrand = "Tất cả hãng";
-    private string selectedStatus = "Mọi trạng thái";
+    private string selectedBrandId = "";
+    private string selectedStatus = "";
     private string notice = "";
+    private bool loading, saving, showModal;
+    private int currentPage = 1, total;
 
-    private bool showAddModal;
-    private int currentPage = 1;
+    private List<CarListItem> cars = new();
+    private List<BrandItem> brands = new();
+    private List<CategoryItem> categories = new();
 
-    private const int PageSize = 5;
+    private Guid? editingId;
+    private CarForm form = new();
+    private CarListItem? carToDelete;
+    private string? imagePreview;   // data URI (hiển thị + gửi lên API)
 
-    private string? imagePreview;
-    private string? imageData;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling(total / (double)PageSize));
 
-    private HashSet<int> selectedIds = new();
-    private NewCarForm newCar = new();
-
-    private List<CarItem> cars = new()
-{
-new(1, "VinFast VF 8 Plus", "30K-218.46", "VinFast", "SUV điện", 18420, 1450000, "Sẵn sàng", "available", "🚙",
-"thumb-vinfast"),
-new(2, "Mercedes-Benz C200", "51K-883.26", "Mercedes", "Luxury", 24880, 2500000, "Đang cho thuê", "renting", "🚘",
-"thumb-mercedes"),
-new(3, "Toyota Camry 2.5Q", "51H-926.08", "Toyota", "Sedan", 36105, 1250000, "Đang cho thuê", "renting", "🚗",
-"thumb-toyota"),
-new(4, "BMW X5 xDrive40i", "29A-728.19", "BMW", "Luxury SUV", 12640, 3200000, "Bảo trì", "maintenance", "🚙",
-"thumb-bmw"),
-new(5, "Tesla Model 3", "30K-556.72", "Tesla", "Sedan điện", 9870, 1800000, "Hư hỏng", "broken", "🚗", "thumb-tesla"),
-new(6, "Mazda CX-5 Premium", "51A-123.45", "Mazda", "SUV", 22100, 1100000, "Sẵn sàng", "available", "🚙",
-"thumb-mazda"),
-new(7, "Honda City RS", "51G-456.78", "Honda", "Sedan", 15300, 850000, "Sẵn sàng", "available", "🚗", "thumb-honda"),
-new(8, "Kia Carnival", "51B-789.12", "Kia", "MPV", 30200, 1750000, "Đang cho thuê", "renting", "🚐", "thumb-kia")
-};
-
-    private readonly string[] brands =
+    protected override async Task OnInitializedAsync()
     {
-"VinFast", "Mercedes", "Toyota", "BMW",
-"Tesla", "Mazda", "Honda", "Kia"
-};
-
-    private readonly List<(string Name, int Count)> vehicleTypes = new()
-{
-("Sedan", 42),
-("SUV", 38),
-("MPV", 16),
-("Hatchback", 12),
-("Bán tải", 8),
-("Xe điện", 12)
-};
-
-    private readonly List<(string Name, string Initial, int Count)> brandSummaries = new()
-{
-("BMW", "B", 12),
-("Honda", "H", 16),
-("Kia", "K", 10),
-("Mazda", "M", 14),
-("Mercedes", "M", 18),
-("Tesla", "T", 8),
-("Toyota", "T", 22),
-("VinFast", "V", 28)
-};
-
-    private IEnumerable<CarItem> FilteredCars =>
-    cars.Where(c =>
-    (string.IsNullOrWhiteSpace(searchText)
-    || c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)
-    || c.Plate.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-    && (selectedBrand == "Tất cả hãng" || c.Brand == selectedBrand)
-    && (selectedStatus == "Mọi trạng thái" || c.Status == selectedStatus));
-
-    private IEnumerable<CarItem> PagedCars =>
-    FilteredCars.Skip((currentPage - 1) * PageSize).Take(PageSize);
-
-    private int TotalPages =>
-    Math.Max(1, (int)Math.Ceiling(FilteredCars.Count() / (double)PageSize));
-
-    private bool AllVisibleSelected =>
-    PagedCars.Any() && PagedCars.All(c => selectedIds.Contains(c.Id));
-
-    private void SetTab(string tab)
-    {
-        activeTab = tab;
-        notice = "";
-    }
-
-    private void ClearFilters()
-    {
-        searchText = "";
-        selectedBrand = "Tất cả hãng";
-        selectedStatus = "Mọi trạng thái";
-        currentPage = 1;
-        selectedIds.Clear();
-    }
-
-    private void ToggleSelectAll(ChangeEventArgs e)
-    {
-        var check = e.Value is bool value && value;
-
-        foreach (var car in PagedCars)
+        try
         {
-            if (check)
-                selectedIds.Add(car.Id);
-            else
-                selectedIds.Remove(car.Id);
+            brands = await Http.GetFromJsonAsync<List<BrandItem>>("car-brands") ?? new();
+            categories = await Http.GetFromJsonAsync<List<CategoryItem>>("car-categories") ?? new();
         }
+        catch (Exception ex) { notice = "Không tải được hãng/loại xe: " + ex.Message; }
+        await LoadCarsAsync();
     }
 
-    private void ToggleOne(int id, ChangeEventArgs e)
+    // ---------- Đọc dữ liệu ----------
+    private async Task LoadCarsAsync()
     {
-        if (e.Value is bool check && check)
-            selectedIds.Add(id);
-        else
-            selectedIds.Remove(id);
+        loading = true;
+        try
+        {
+            var qs = new List<string> { $"page={currentPage}", $"pageSize={PageSize}" };
+            if (!string.IsNullOrWhiteSpace(searchText)) qs.Add("keyword=" + Uri.EscapeDataString(searchText.Trim()));
+            if (Guid.TryParse(selectedBrandId, out var bid)) qs.Add("brandId=" + bid);
+            if (!string.IsNullOrEmpty(selectedStatus)) qs.Add("status=" + selectedStatus);
+
+            var res = await Http.GetFromJsonAsync<PagedResult>("cars?" + string.Join("&", qs));
+            cars = res?.Items ?? new();
+            total = res?.Total ?? 0;
+        }
+        catch (Exception ex) { notice = "Không tải được danh sách xe: " + ex.Message; }
+        finally { loading = false; }
     }
 
-    private void PreviousPage()
+    private async Task ApplyFilter() { currentPage = 1; await LoadCarsAsync(); }
+
+    private async Task ClearFilters()
     {
-        if (currentPage > 1)
-            currentPage--;
+        searchText = ""; selectedBrandId = ""; selectedStatus = "";
+        await ApplyFilter();
     }
 
-    private void NextPage()
+    private async Task GoToPage(int page)
     {
-        if (currentPage < TotalPages)
-            currentPage++;
-    }
-
-    private void GoToPage(int page)
-    {
+        if (page < 1 || page > TotalPages) return;
         currentPage = page;
+        await LoadCarsAsync();
     }
 
+    private async Task ShowCarsOfBrand(Guid brandId)
+    {
+        selectedBrandId = brandId.ToString();
+        selectedStatus = ""; searchText = "";
+        activeTab = "list";
+        await ApplyFilter();
+    }
+
+    // ---------- Thêm / sửa ----------
     private void OpenAddModal()
     {
-        newCar = new NewCarForm();
-
+        editingId = null;
+        form = new CarForm();
         imagePreview = null;
-        imageData = null;
-
-        showAddModal = true;
+        showModal = true;
     }
 
-    private void CloseAddModal()
+    private void OpenEditModal(CarListItem c)
     {
-        showAddModal = false;
-
-        imagePreview = null;
-        imageData = null;
+        editingId = c.Id;
+        form = new CarForm
+        {
+            Name = c.Name, LicensePlate = c.LicensePlate, ManufactureYear = c.ManufactureYear,
+            PricePerDay = c.PricePerDay, Color = c.Color, Seats = c.Seats, Mileage = c.Mileage,
+            Status = c.Status, BrandId = c.BrandId, CategoryId = c.CategoryId
+        };
+        imagePreview = null;   // chỉ có giá trị khi người dùng chọn ảnh mới
+        showModal = true;
     }
 
-    private void AddCar()
+    private void CloseModal() { showModal = false; imagePreview = null; }
+
+    private async Task SaveCar()
     {
-        var id = cars.Count == 0 ? 1 : cars.Max(c => c.Id) + 1;
-        var brand = newCar.Brand.Trim();
+        saving = true;
+        try
+        {
+            HttpResponseMessage resp;
+            Guid carId;
 
-        cars.Insert(0, new CarItem(
-        id,
-        newCar.Name.Trim(),
-        newCar.Plate.Trim().ToUpperInvariant(),
-        brand,
-        string.IsNullOrWhiteSpace(newCar.Type)
-        ? "Chưa phân loại"
-        : newCar.Type.Trim(),
-        newCar.Kilometers,
-        newCar.Price,
-        "Sẵn sàng",
-        "available",
-        "🚘",
-        "thumb-new",
-        imagePreview
-        ));
+            if (editingId == null)
+            {
+                resp = await Http.PostAsJsonAsync("cars", form);
+                if (!resp.IsSuccessStatusCode) { notice = await ReadError(resp); return; }
+                var created = await resp.Content.ReadFromJsonAsync<CreatedResult>();
+                carId = created!.Id;
+            }
+            else
+            {
+                carId = editingId.Value;
+                resp = await Http.PutAsJsonAsync($"cars/{carId}", form);
+                if (!resp.IsSuccessStatusCode) { notice = await ReadError(resp); return; }
+            }
 
-        showAddModal = false;
+            if (!string.IsNullOrEmpty(imagePreview))
+            {
+                var imgResp = await Http.PostAsJsonAsync($"cars/{carId}/images",
+                    new { url = imagePreview, isPrimary = true });
+                if (!imgResp.IsSuccessStatusCode)
+                {
+                    notice = "Đã lưu xe nhưng thêm ảnh lỗi: " + await ReadError(imgResp);
+                    showModal = false;
+                    await LoadCarsAsync();
+                    return;
+                }
+            }
 
-        imagePreview = null;
-        imageData = null;
-
-        activeTab = "list";
-        selectedBrand = "Tất cả hãng";
-        selectedStatus = "Mọi trạng thái";
-        searchText = "";
-        currentPage = 1;
-
-        notice = "Đã thêm xe vào danh sách trên giao diện.";
+            notice = editingId == null ? "Đã thêm xe mới." : "Đã cập nhật xe.";
+            showModal = false;
+            imagePreview = null;
+            await LoadCarsAsync();
+        }
+        catch (Exception ex) { notice = "Lỗi kết nối API: " + ex.Message; }
+        finally { saving = false; }
     }
 
-    private void ShowCarAction(CarItem car)
+    // ---------- Xóa (mềm) ----------
+    private void AskDelete(CarListItem c) => carToDelete = c;
+
+    private async Task ConfirmDelete()
     {
-        notice = $"Bạn đang chọn {car.Name} ({car.Plate}). Chức năng chỉnh sửa/xóa sẽ được bổ sung khi kết nối API.";
+        if (carToDelete == null) return;
+        saving = true;
+        try
+        {
+            var resp = await Http.DeleteAsync($"cars/{carToDelete.Id}");
+            notice = resp.IsSuccessStatusCode
+                ? $"Đã chuyển {carToDelete.Name} sang ngừng hoạt động."
+                : await ReadError(resp);   // vd: 409 xe đang có đơn thuê
+            carToDelete = null;
+            await LoadCarsAsync();
+        }
+        catch (Exception ex) { notice = "Lỗi kết nối API: " + ex.Message; }
+        finally { saving = false; }
     }
 
-    private void ShowAddTypeInfo()
+    // ---------- Hãng xe / Loại xe ----------
+    private bool showCatalogModal;
+    private string catalogKind = "brand";
+    private Guid? catalogEditingId;
+    private string catalogName = "";
+    private string catalogExtra = "";
+    private string catalogError = "";
+    private (string Kind, Guid Id, string Name)? catalogToDelete;
+
+    private string CatalogTitle => catalogKind == "brand" ? "hãng xe" : "loại xe";
+    private string CatalogRoute => catalogKind == "brand" ? "car-brands" : "car-categories";
+
+    private async Task ReloadCatalogsAsync()
     {
-        notice = "Chức năng thêm loại xe sẽ được kết nối API sau.";
+        brands = await Http.GetFromJsonAsync<List<BrandItem>>("car-brands") ?? new();
+        categories = await Http.GetFromJsonAsync<List<CategoryItem>>("car-categories") ?? new();
     }
 
-    private void ShowAddBrandInfo()
+    private void OpenCatalogModal(string kind, Guid? id)
     {
-        notice = "Chức năng thêm hãng xe sẽ được kết nối API sau.";
+        catalogKind = kind;
+        catalogEditingId = id;
+        catalogError = "";
+        catalogName = ""; catalogExtra = "";
+
+        if (id != null && kind == "brand")
+        {
+            var b = brands.First(x => x.Id == id);
+            catalogName = b.Name; catalogExtra = b.Country ?? "";
+        }
+        else if (id != null)
+        {
+            var c = categories.First(x => x.Id == id);
+            catalogName = c.Name; catalogExtra = c.Description ?? "";
+        }
+        showCatalogModal = true;
     }
 
-    private void ShowCarsOfBrand(string brandName)
+    private async Task SaveCatalog()
     {
-        selectedBrand = brandName;
-        selectedStatus = "Mọi trạng thái";
-        searchText = "";
-        currentPage = 1;
-        activeTab = "list";
+        if (string.IsNullOrWhiteSpace(catalogName)) { catalogError = "Tên không được trống."; return; }
+
+        saving = true; catalogError = "";
+        try
+        {
+            object body = catalogKind == "brand"
+                ? new { name = catalogName.Trim(), country = catalogExtra.Trim() }
+                : new { name = catalogName.Trim(), description = catalogExtra.Trim() };
+
+            var resp = catalogEditingId == null
+                ? await Http.PostAsJsonAsync(CatalogRoute, body)
+                : await Http.PutAsJsonAsync($"{CatalogRoute}/{catalogEditingId}", body);
+
+            if (!resp.IsSuccessStatusCode) { catalogError = await ReadError(resp); return; }
+
+            notice = catalogEditingId == null ? $"Đã thêm {CatalogTitle}." : $"Đã cập nhật {CatalogTitle}.";
+            showCatalogModal = false;
+            await ReloadCatalogsAsync();
+            await LoadCarsAsync();   // tên hãng/loại hiển thị trong bảng xe
+        }
+        catch (Exception ex) { catalogError = "Lỗi kết nối API: " + ex.Message; }
+        finally { saving = false; }
     }
 
-    private void ClearNotice()
+    private void AskDeleteCatalog(string kind, Guid id, string name) => catalogToDelete = (kind, id, name);
+
+    private async Task ConfirmDeleteCatalog()
     {
-        notice = string.Empty;
+        if (catalogToDelete == null) return;
+        var (kind, id, name) = catalogToDelete.Value;
+        saving = true;
+        try
+        {
+            var route = kind == "brand" ? "car-brands" : "car-categories";
+            var resp = await Http.DeleteAsync($"{route}/{id}");
+            if (resp.IsSuccessStatusCode)
+            {
+                notice = $"Đã xóa \"{name}\".";
+                if (selectedBrandId == id.ToString()) selectedBrandId = "";
+                await ReloadCatalogsAsync();
+                await LoadCarsAsync();
+            }
+            else notice = await ReadError(resp);   // vd: 409 đang có xe
+            catalogToDelete = null;
+        }
+        catch (Exception ex) { notice = "Lỗi kết nối API: " + ex.Message; }
+        finally { saving = false; }
     }
 
-    private sealed record CarItem(
-    int Id,
-    string Name,
-    string Plate,
-    string Brand,
-    string Type,
-    int Kilometers,
-    decimal Price,
-    string Status,
-    string StatusClass,
-    string Icon,
-    string ThumbClass,
-    string? Image = null
-    );
+    // ---------- Ảnh ----------
+    private async Task OnImageSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
 
-    private sealed class NewCarForm
+        var allowed = new[] { "image/jpeg", "image/png", "image/webp" };
+        if (!allowed.Contains(file.ContentType)) { notice = "Vui lòng chọn ảnh JPG, PNG hoặc WEBP."; return; }
+        if (file.Size > 5 * 1024 * 1024) { notice = "Ảnh không được vượt quá 5MB."; return; }
+
+        using var stream = file.OpenReadStream(5 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        imagePreview = $"data:{file.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+    }
+
+    private void RemoveImage() => imagePreview = null;
+
+    // ---------- Helpers & models ----------
+    private static async Task<string> ReadError(HttpResponseMessage resp)
+    {
+        try
+        {
+            var err = await resp.Content.ReadFromJsonAsync<ApiError>();
+            if (!string.IsNullOrWhiteSpace(err?.Message)) return err.Message!;
+        }
+        catch { }
+        return $"Lỗi {(int)resp.StatusCode} {resp.ReasonPhrase}";
+    }
+
+    private sealed record ApiError(string? Message);
+    private sealed record CreatedResult(Guid Id);
+    private sealed record PagedResult(List<CarListItem> Items, int Total, int Page, int PageSize);
+    private sealed record BrandItem(Guid Id, string Name, string? Country, int CarCount);
+    private sealed record CategoryItem(Guid Id, string Name, string? Description, int CarCount);
+
+    private sealed record CarListItem(
+        Guid Id, string Name, string LicensePlate, int ManufactureYear, decimal PricePerDay,
+        string Color, int Seats, int Mileage, string Status,
+        Guid BrandId, string BrandName, Guid CategoryId, string CategoryName,
+        string? PrimaryImage, double? AverageRating);
+
+    private sealed class CarForm
     {
         [Required(ErrorMessage = "Vui lòng nhập tên xe.")]
         public string Name { get; set; } = "";
 
         [Required(ErrorMessage = "Vui lòng nhập biển số.")]
-        public string Plate { get; set; } = "";
+        public string LicensePlate { get; set; } = "";
 
-        [Required(ErrorMessage = "Vui lòng nhập hãng xe.")]
-        public string Brand { get; set; } = "";
+        [Range(1990, 2100, ErrorMessage = "Năm sản xuất không hợp lệ.")]
+        public int ManufactureYear { get; set; } = DateTime.Now.Year;
 
-        public string Type { get; set; } = "Sedan";
+        [Range(1, double.MaxValue, ErrorMessage = "Giá thuê phải lớn hơn 0.")]
+        public decimal PricePerDay { get; set; }
 
-        public int Kilometers { get; set; }
+        public string Color { get; set; } = "";
 
-        public decimal Price { get; set; }
-    }
+        [Range(1, 60, ErrorMessage = "Số chỗ phải lớn hơn 0.")]
+        public int Seats { get; set; } = 4;
 
-    private async Task OnImageSelected(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
+        [Range(0, int.MaxValue, ErrorMessage = "Số km không hợp lệ.")]
+        public int Mileage { get; set; }
 
-        if (file == null)
-            return;
+        public string Status { get; set; } = "Available";
 
-        var allowedTypes = new[]
-        {
-"image/jpeg",
-"image/png",
-"image/webp"
-};
+        [Range(typeof(Guid), "00000000-0000-0000-0000-000000000001", "ffffffff-ffff-ffff-ffff-ffffffffffff",
+            ErrorMessage = "Vui lòng chọn hãng xe.")]
+        public Guid BrandId { get; set; }
 
-        if (!allowedTypes.Contains(file.ContentType))
-        {
-            notice = "Vui lòng chọn ảnh JPG, PNG hoặc WEBP.";
-            return;
-        }
-
-        if (file.Size > 5 * 1024 * 1024)
-        {
-            notice = "Ảnh không được vượt quá 5MB.";
-            return;
-        }
-
-        using var stream = file.OpenReadStream(5 * 1024 * 1024);
-
-        using var memoryStream = new MemoryStream();
-
-        await stream.CopyToAsync(memoryStream);
-
-        var bytes = memoryStream.ToArray();
-
-        imageData = Convert.ToBase64String(bytes);
-
-        imagePreview =
-        $"data:{file.ContentType};base64,{imageData}";
-    }
-
-    private void RemoveImage()
-    {
-        imagePreview = null;
-        imageData = null;
+        [Range(typeof(Guid), "00000000-0000-0000-0000-000000000001", "ffffffff-ffff-ffff-ffff-ffffffffffff",
+            ErrorMessage = "Vui lòng chọn loại xe.")]
+        public Guid CategoryId { get; set; }
     }
 }

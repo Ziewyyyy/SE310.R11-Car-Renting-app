@@ -1,6 +1,9 @@
 @page "/user/reviews"
 @rendermode InteractiveServer
 @using CarRentalFE.Components.Layout
+@using CarRentalFE.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
 @layout EmptyLayout
 
 <PageTitle>Đánh giá của tôi - RENTO</PageTitle>
@@ -50,7 +53,7 @@
                 <a href="/user/account-info">♙ &nbsp; Thông tin cá nhân</a>
             </nav>
 
-            <a href="/login" class="sidebar-logout">
+            <a href="javascript:void(0)" class="sidebar-logout" @onclick="Logout">
                 ⇥ &nbsp; Đăng xuất
             </a>
         </aside>
@@ -194,6 +197,11 @@ Response = "Cảm ơn anh Tú đã tin tưởng RENTO. Hẹn gặp lại anh tro
         ShowReviewModal = true;
     }
 
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
     private void CloseReviewModal()
     {
         ShowReviewModal = false;

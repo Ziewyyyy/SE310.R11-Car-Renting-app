@@ -3,6 +3,8 @@
 @using System.Linq
 @using CarRentalFE.Components.Layout
 @layout EmptyLayout
+@using CarRentalFE.Services
+@inject AuthService AuthService
 @inject NavigationManager Navigation
 
 <PageTitle>Thông báo - RENTO</PageTitle>
@@ -52,7 +54,7 @@
                 <a href="/user/account-info">♙ &nbsp; Thông tin cá nhân</a>
             </nav>
 
-            <a href="/login" class="sidebar-logout">
+            <a href="javascript:void(0)" class="sidebar-logout" @onclick="Logout">
                 ⇥ &nbsp; Đăng xuất
             </a>
         </aside>
@@ -187,8 +189,9 @@ IsRead = true
         public bool IsRead { get; set; }
     }
 
-    private void Logout()
+    private async Task Logout()
     {
-        Navigation.NavigateTo("/login");
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

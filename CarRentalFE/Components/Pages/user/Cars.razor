@@ -1,0 +1,421 @@
+
+@page "/user/cars"
+@rendermode InteractiveServer
+@using CarRentalFE.Components.Layout
+@layout UserLayout
+@using CarRentalFE.Services
+@inject AuthService AuthService
+
+@using CarRentalFE.Models
+@using CarRentalFE.Services
+
+@inject CarApiService Api
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+
+<PageTitle>Thuê xe - RENTO</PageTitle>
+
+<div class="cars-page">
+    <div class="cars-container">
+
+        <div class="cars-heading">
+            <h1>Tìm chiếc xe phù hợp</h1>
+            <p>@result.Total xe phù hợp tại TP. Hồ Chí Minh</p>
+        </div>
+
+        <section class="search-panel">
+            <div class="search-field location-field">
+                <label>Địa điểm nhận xe</label>
+                <div class="search-input">
+                    <span>⌖</span>
+                    <input value="Quận 1, TP. Hồ Chí Minh" readonly />
+                </div>
+            </div>
+
+            <div class="search-field">
+                <label>Nhận xe</label>
+                <input type="date" @bind="pickupDate" />
+            </div>
+
+            <div class="search-field">
+                <label>Trả xe</label>
+                <input type="date" @bind="returnDate" />
+            </div>
+
+            <button class="search-btn" @onclick="ApplyFilters">
+                <span>⌕</span> Tìm xe ngay
+            </button>
+        </section>
+
+        <div class="cars-content">
+
+            <aside class="filter-sidebar">
+                <div class="filter-heading">
+                    <h3>Bộ lọc</h3>
+                    <button @onclick="ClearFilters">Xóa tất cả</button>
+                </div>
+
+                <div class="filter-group">
+                    <label>Hãng xe hoặc mẫu xe</label>
+                    <input placeholder="BMW, Audi..."
+                           @bind="query.Keyword"
+                           @bind:event="oninput"
+                           @onkeydown="HandleSearchKey" />
+                </div>
+
+                <div class="filter-group">
+                    <label>Hãng xe</label>
+                    <select @bind="query.BrandId">
+                        <option value="">Tất cả hãng xe</option>
+                        @foreach (var brand in brands)
+                        {
+                            <option value="@brand.Id">@brand.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Loại xe</label>
+                    <select @bind="query.CategoryId">
+                        <option value="">Tất cả loại xe</option>
+                        @foreach (var category in categories)
+                        {
+                            <option value="@category.Id">@category.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Số chỗ</label>
+                    <div class="seat-options">
+                        @foreach (var seat in new[] { 4, 5, 7, 9, 16 })
+                        {
+                            <button class="@(query.Seats == seat ? "active" : "")"
+                                    @onclick="() => SetSeats(seat)">
+                                @seat chỗ
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Giá thuê mỗi ngày</label>
+                    <div class="price-inputs">
+                        <input type="number" placeholder="Từ"
+                               @bind="minPriceInput" />
+                        <input type="number" placeholder="Đến"
+                               @bind="maxPriceInput" />
+                    </div>
+                    <small>Đơn vị: VNĐ/ngày</small>
+                </div>
+
+                <div class="filter-group">
+                    <label>Sắp xếp trạng thái</label>
+                    <select @bind="query.Status">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Available">Sẵn sàng</option>
+                        <option value="Rented">Đang cho thuê</option>
+                        <option value="Maintenance">Bảo trì</option>
+                    </select>
+                </div>
+
+                <button class="apply-filter-btn" @onclick="ApplyFilters">
+                    Áp dụng bộ lọc
+                </button>
+            </aside>
+
+            <section class="cars-results">
+
+                <div class="results-toolbar">
+                    <div class="active-filter">
+                        TP. Hồ Chí Minh
+                        <span>×</span>
+                    </div>
+
+                    <select @bind="query.Sort" @bind:after="ApplyFilters">
+                        <option value="">Phù hợp nhất</option>
+                        <option value="price_asc">Giá thấp đến cao</option>
+                        <option value="price_desc">Giá cao đến thấp</option>
+                        <option value="newest">Xe mới nhất</option>
+                    </select>
+                </div>
+
+                @if (loading)
+                {
+                    <div class="cars-message">Đang tải danh sách xe...</div>
+                }
+                else if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="cars-message error">@errorMessage</div>
+                }
+                else if (result.Items.Count == 0)
+                {
+                    <div class="cars-message">
+                        Không tìm thấy xe phù hợp với điều kiện tìm kiếm.
+                    </div>
+                }
+                else
+                {
+                    <div class="cars-grid">
+                        @foreach (var car in result.Items)
+                        {
+                            <article class="car-card" @key="car.Id">
+
+                                <div class="car-image">
+                                    @if (!string.IsNullOrWhiteSpace(car.PrimaryImage))
+                                    {
+                                        <img src="@ImageUrl(car.PrimaryImage)"
+                                             alt="@car.Name" />
+                                    }
+                                    else
+                                    {
+                                        <div class="no-image">
+                                            <span>🚘</span>
+                                            <small>Chưa có hình ảnh</small>
+                                        </div>
+                                    }
+
+                                    <span class="car-status @StatusClass(car.Status)">
+                                        @StatusText(car.Status)
+                                    </span>
+                                </div>
+
+                                <div class="car-info">
+                                    <div class="car-category">
+                                        @car.CategoryName · @car.BrandName
+                                    </div>
+
+                                    <h3>@car.Name</h3>
+
+                                    <div class="car-specs">
+                                        <span>♙ @car.Seats chỗ</span>
+                                        <span>@car.ManufactureYear</span>
+                                        <span>@car.Color</span>
+                                    </div>
+
+                                    @if (car.AverageRating.HasValue)
+                                    {
+                                        <div class="car-rating">
+                                            ★ @car.AverageRating.Value.ToString("0.0")
+                                        </div>
+                                    }
+
+                                    <div class="car-card-footer">
+                                        <div class="car-price">
+                                            <strong>@car.PricePerDay.ToString("N0") đ</strong>
+                                            <small>/ ngày</small>
+                                        </div>
+
+                                        <a href="@($"/user/cars/{car.Id}")"
+                                           class="detail-link">
+                                            Xem chi tiết <span>›</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                        }
+                    </div>
+
+                    @if (result.Total > result.PageSize)
+                    {
+                        <div class="pagination">
+                            <button disabled="@(query.Page <= 1)"
+                                    @onclick="PreviousPage">
+                                ‹
+                            </button>
+
+                            <span>
+                                Trang @result.Page /
+                                @Math.Max(1, (int)Math.Ceiling(
+                                    (double)result.Total / result.PageSize))
+                            </span>
+
+                            <button disabled="@(query.Page * result.PageSize >= result.Total)"
+                                    @onclick="NextPage">
+                                ›
+                            </button>
+                        </div>
+                    }
+                }
+            </section>
+        </div>
+    </div>
+</div>
+
+@code {
+    private PagedResult<CarListItem> result = new();
+    private List<BrandItem> brands = new();
+    private List<CategoryItem> categories = new();
+
+    private CarQuery query = new()
+    {
+        Page = 1,
+        PageSize = 9
+    };
+
+    private DateTime pickupDate = DateTime.Today.AddDays(1);
+    private DateTime returnDate = DateTime.Today.AddDays(4);
+
+    private decimal? minPriceInput;
+    private decimal? maxPriceInput;
+
+    private bool loading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        errorMessage = null;
+
+        try
+        {
+            var brandTask = Api.GetBrandsAsync();
+            var categoryTask = Api.GetCategoriesAsync();
+
+            brands = await brandTask;
+            categories = await categoryTask;
+
+            await LoadCars();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Không thể tải dữ liệu xe: " + ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task LoadCars()
+    {
+        query.PickupDate = pickupDate;
+        query.ReturnDate = returnDate;
+
+        if (pickupDate >= returnDate)
+        {
+            errorMessage = "Ngày trả xe phải sau ngày nhận xe.";
+            result = new();
+            return;
+        }
+
+        query.MinPrice = minPriceInput;
+        query.MaxPrice = maxPriceInput;
+
+        result = await Api.GetCarsAsync(query);
+    }
+
+    private async Task ApplyFilters()
+    {
+        query.Page = 1;
+        loading = true;
+        errorMessage = null;
+
+        try
+        {
+            await LoadCars();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Không thể tìm kiếm xe: " + ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task HandleSearchKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await ApplyFilters();
+    }
+
+    private async Task SetSeats(int seats)
+    {
+        query.Seats = query.Seats == seats ? null : seats;
+        await ApplyFilters();
+    }
+
+    private async Task PreviousPage()
+    {
+        if (query.Page <= 1) return;
+        query.Page--;
+        await ApplyFiltersWithoutReset();
+    }
+
+    private async Task NextPage()
+    {
+        if (query.Page * query.PageSize >= result.Total) return;
+        query.Page++;
+        await ApplyFiltersWithoutReset();
+    }
+
+    private async Task ApplyFiltersWithoutReset()
+    {
+        loading = true;
+        try
+        {
+            await LoadCars();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task ClearFilters()
+    {
+        query = new CarQuery
+        {
+            Page = 1,
+            PageSize = 9
+        };
+
+        minPriceInput = null;
+        maxPriceInput = null;
+        pickupDate = DateTime.Today.AddDays(1);
+        returnDate = DateTime.Today.AddDays(4);
+
+        await ApplyFilters();
+    }
+
+    private string ImageUrl(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return "";
+
+        if (Uri.TryCreate(path, UriKind.Absolute, out var absolute))
+            return absolute.ToString();
+
+        var baseUrl = Configuration["Api:BaseUrl"]
+                      ?? "http://localhost:5110/";
+
+        return new Uri(new Uri(baseUrl), path.TrimStart('/')).ToString();
+    }
+
+    private static string StatusText(string status) => status switch
+    {
+        "Available" => "Sẵn sàng",
+        "Rented" => "Đang cho thuê",
+        "Maintenance" => "Bảo trì",
+        "Inactive" => "Ngừng hoạt động",
+        _ => status
+    };
+
+    private static string StatusClass(string status) => status switch
+    {
+        "Available" => "available",
+        "Rented" => "rented",
+        _ => "other"
+    };
+}

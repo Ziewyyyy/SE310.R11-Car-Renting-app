@@ -33,7 +33,6 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<User>().HasIndex(x => x.Email).IsUnique();
         modelBuilder.Entity<Car>().HasIndex(x => x.LicensePlate).IsUnique();
         modelBuilder.Entity<Car>().Property(x => x.PricePerDay).HasPrecision(18, 2);
         modelBuilder.Entity<Booking>().Property(x => x.TotalAmount).HasPrecision(18, 2);
@@ -84,6 +83,10 @@ public class AppDbContext : DbContext
             .HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<AuditLog>().HasOne<User>().WithMany()
             .HasForeignKey(x => x.ActorId).OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<RefreshToken>()
+            .HasIndex(r => r.TokenHash)
+            .IsUnique();
 
         modelBuilder.Entity<Contract>().HasIndex(x => x.BookingId).IsUnique();
         modelBuilder.Entity<CarFeatureMapping>().HasIndex(x => new { x.CarId, x.CarFeatureId }).IsUnique();

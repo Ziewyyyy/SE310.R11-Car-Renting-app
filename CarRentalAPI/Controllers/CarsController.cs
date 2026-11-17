@@ -23,7 +23,7 @@ public class CarFilter
 
 public record CarListItemDto(
     Guid Id, string Name, string LicensePlate, int ManufactureYear, decimal PricePerDay,
-    string Color, int Seats, string Status,
+    string Color, int Seats, int Mileage, string Status,          // <-- thêm Mileage
     Guid BrandId, string BrandName, Guid CategoryId, string CategoryName,
     string? PrimaryImage, double? AverageRating);
 
@@ -87,7 +87,7 @@ public class CarsController : ControllerBase
         var items = await q.Skip((page - 1) * size).Take(size)
             .Select(c => new CarListItemDto(
                 c.Id, c.Name, c.LicensePlate, c.ManufactureYear, c.PricePerDay,
-                c.Color, c.Seats, c.Status,
+                c.Color, c.Seats, c.Mileage, c.Status,
                 c.BrandId, c.Brand.Name, c.CategoryId, c.Category.Name,
                 _db.CarImages.Where(i => i.CarId == c.Id)
                     .OrderByDescending(i => i.IsPrimary).Select(i => i.Url).FirstOrDefault(),
@@ -104,8 +104,15 @@ public class CarsController : ControllerBase
         var car = await _db.Cars.AsNoTracking().Where(c => c.Id == id)
             .Select(c => new
             {
-                c.Id, c.Name, c.LicensePlate, c.ManufactureYear, c.PricePerDay,
-                c.Color, c.Seats, c.Mileage, c.Status,
+                c.Id,
+                c.Name,
+                c.LicensePlate,
+                c.ManufactureYear,
+                c.PricePerDay,
+                c.Color,
+                c.Seats,
+                c.Mileage,
+                c.Status,
                 Brand = new { c.Brand.Id, c.Brand.Name, c.Brand.Country },
                 Category = new { c.Category.Id, c.Category.Name, c.Category.Description },
                 AverageRating = _db.Reviews.Where(r => r.CarId == c.Id).Average(r => (double?)r.Rating),
@@ -133,10 +140,16 @@ public class CarsController : ControllerBase
 
         var car = new Car
         {
-            Name = dto.Name.Trim(), LicensePlate = dto.LicensePlate.Trim(),
-            ManufactureYear = dto.ManufactureYear, PricePerDay = dto.PricePerDay,
-            Color = dto.Color, Seats = dto.Seats, Mileage = dto.Mileage,
-            Status = dto.Status ?? "Available", BrandId = dto.BrandId, CategoryId = dto.CategoryId
+            Name = dto.Name.Trim(),
+            LicensePlate = dto.LicensePlate.Trim(),
+            ManufactureYear = dto.ManufactureYear,
+            PricePerDay = dto.PricePerDay,
+            Color = dto.Color,
+            Seats = dto.Seats,
+            Mileage = dto.Mileage,
+            Status = dto.Status ?? "Available",
+            BrandId = dto.BrandId,
+            CategoryId = dto.CategoryId
         };
         _db.Cars.Add(car);
         await _db.SaveChangesAsync();

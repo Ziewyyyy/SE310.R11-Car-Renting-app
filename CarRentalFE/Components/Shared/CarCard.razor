@@ -9,7 +9,9 @@
         }
         else
         {
-            <div class="img-fallback"><Icon Name="car" Size="44" /></div>
+            <div class="img-fallback">
+                <Icon Name="car" Size="44" />
+            </div>
         }
         <span class="badge @StatusClass">@StatusText</span>
     </div>
@@ -17,13 +19,17 @@
         <div class="eyebrow">@Car.CategoryName · @Car.BrandName</div>
         <div class="vehicle-name">@Car.Name</div>
         <div class="specs">
-            <span><Icon Name="user" Size="16" /> @Car.Seats chỗ</span>
+            <span>
+                <Icon Name="user" Size="16" /> @Car.Seats chỗ
+            </span>
             <span>@Car.ManufactureYear</span>
             <span>@Car.Color</span>
         </div>
         <div class="card-foot">
             <div><b>@Car.PricePerDay.ToString("N0", Vi) ₫</b><small>/ ngày</small></div>
-            <a class="btn btn-secondary" href="/cars/@Car.Id">Xem chi tiết <Icon Name="arrow" Size="16" /></a>
+            <a class="btn btn-secondary" href="/cars/@Car.Id">Xem chi tiết
+                <Icon Name="arrow" Size="16" />
+            </a>
         </div>
     </div>
 </article>
@@ -34,7 +40,13 @@
     private static readonly CultureInfo Vi = new("vi-VN");
 
     // Seed đang để đường dẫn tương đối (/images/cars/...) chưa có file thật nên chỉ hiện ảnh khi là link http(s)
-    private bool HasImage => Car.PrimaryImage?.StartsWith("http", StringComparison.OrdinalIgnoreCase) == true;
+    private bool HasImage =>
+    !string.IsNullOrWhiteSpace(Car.PrimaryImage) &&
+    (
+    Car.PrimaryImage.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+    Car.PrimaryImage.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+    Car.PrimaryImage.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase)
+    );
 
     private string StatusText => Car.Status switch
     {

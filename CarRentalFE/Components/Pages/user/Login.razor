@@ -1,7 +1,10 @@
 @page "/login"
 @layout EmptyLayout
 @rendermode InteractiveServer
-
+@using CarRentalFE.Models.Auth
+@using CarRentalFE.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Components.Forms
 
@@ -18,7 +21,7 @@
 
         <div class="user-login-header-right">
             <span>Chưa có tài khoản?</span>
-            <a href="/user/register">Đăng ký</a>
+            <a href="/register">Đăng ký</a>
         </div>
     </header>
 
@@ -38,11 +41,8 @@
 
                 <div class="user-login-field">
                     <label for="email">Địa chỉ email</label>
-                    <InputText id="email"
-                               class="user-login-input"
-                               type="email"
-                               placeholder="Nhập email của bạn"
-                               @bind-Value="loginModel.Email" />
+                    <InputText id="email" class="user-login-input" type="email" placeholder="Nhập email của bạn"
+                        autocomplete="off" @bind-Value="loginModel.Email" />
                     <ValidationMessage For="@(() => loginModel.Email)" />
                 </div>
 
@@ -53,15 +53,10 @@
                     </div>
 
                     <div class="user-login-password-wrap">
-                        <InputText id="password"
-                                   class="user-login-input"
-                                   type="@(showPassword ? "text" : "password")"
-                                   placeholder="Nhập mật khẩu"
-                                   @bind-Value="loginModel.Password" />
+                        <InputText id="password" class="user-login-input" type="@(showPassword ? "text" : "password")"
+                            placeholder="Nhập mật khẩu" autocomplete="new-password" @bind-Value="loginModel.Password" />
 
-                        <button type="button"
-                                class="user-login-toggle"
-                                @onclick="TogglePassword">
+                        <button type="button" class="user-login-toggle" @onclick="TogglePassword">
                             @(showPassword ? "Ẩn" : "Hiện")
                         </button>
                     </div>
@@ -80,10 +75,16 @@
                     </div>
                 }
 
-                <button type="submit" class="user-login-submit">
-                    Đăng nhập
+                <button type="submit" class="user-login-submit" disabled="@isLoading">
+                    @(isLoading ? "Đang đăng nhập..." : "Đăng nhập")
                     <span>→</span>
                 </button>
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="login-error">
+                        @errorMessage
+                    </div>
+                }
             </EditForm>
 
             <div class="user-login-divider">
@@ -108,6 +109,18 @@
 </div>
 
 @code {
+    protected override void OnInitialized()
+    {
+        loginModel = new LoginModel
+        {
+            Email = "",
+            Password = "",
+            RememberMe = false
+        };
+
+        showPassword = false;
+        errorMessage = "";
+    }
     private LoginModel loginModel = new();
 
     private bool showPassword;
@@ -118,17 +131,36 @@
         showPassword = !showPassword;
     }
 
+    private bool isLoading;
+
     private async Task HandleLogin()
     {
         errorMessage = string.Empty;
+        isLoading = true;
 
-        // TODO:
-        // Gọi AuthService/API để xác thực tài khoản người dùng.
-        // Khi đăng nhập thành công, điều hướng đến trang chủ hoặc trang trước đó.
+        try
+        {
+            var request = new LoginRequest
+            {
+                Email = loginModel.Email,
+                Password = loginModel.Password
+            };
 
-        await Task.CompletedTask;
+            var result = await AuthService.LoginAsync(request);
 
-        errorMessage = "Chưa kết nối chức năng xác thực. Vui lòng tích hợp AuthService.";
+            if (result.Success)
+            {
+                Navigation.NavigateTo("/user/profile");
+            }
+            else
+            {
+                errorMessage = result.Message;
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     public class LoginModel

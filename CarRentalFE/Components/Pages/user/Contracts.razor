@@ -3,6 +3,8 @@
 @using System.Linq
 @using CarRentalFE.Components.Layout
 @layout EmptyLayout
+@using CarRentalFE.Services
+@inject AuthService AuthService
 @inject NavigationManager Navigation
 
 <PageTitle>Hợp đồng thuê xe - RENTO</PageTitle>
@@ -42,7 +44,7 @@
             </div>
 
             <nav class="sidebar-menu">
-                <a href="/user/dashboard">▦ &nbsp; Tổng quan tài khoản</a>  
+                <a href="/user/dashboard">▦ &nbsp; Tổng quan tài khoản</a>
                 <a href="/user/profile">🚘 &nbsp; Đơn thuê của tôi</a>
                 <a href="/user/contracts" class="active">▤ &nbsp; Hợp đồng</a>
                 <a href="/user/payments">▣ &nbsp; Thanh toán</a>
@@ -52,7 +54,7 @@
                 <a href="/user/account-info">♙ &nbsp; Thông tin cá nhân</a>
             </nav>
 
-            <a href="/login" class="sidebar-logout">
+            <a href="javascript:void(0)" class="sidebar-logout" @onclick="Logout">
                 ⇥ &nbsp; Đăng xuất
             </a>
         </aside>
@@ -268,8 +270,9 @@ StatusClass = "signed"
         public string StatusClass { get; set; } = "";
     }
 
-    private void Logout()
+    private async Task Logout()
     {
-        Navigation.NavigateTo("/login");
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

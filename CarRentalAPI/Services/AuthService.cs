@@ -11,15 +11,18 @@ public sealed class AuthService : IAuthService
     private readonly IAuthRepository _repository;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly JwtTokenService _tokenService;
+    private readonly IJwtBlacklistService _jwtBlacklist;
 
     public AuthService(
         IAuthRepository repository,
         IPasswordHasher<User> passwordHasher,
-        JwtTokenService tokenService)
+        JwtTokenService tokenService,
+        IJwtBlacklistService jwtBlacklist)
     {
         _repository = repository;
         _passwordHasher = passwordHasher;
         _tokenService = tokenService;
+        _jwtBlacklist = jwtBlacklist;
     }
 
     public async Task<AuthResult> RegisterAsync(RegisterRequest request)
@@ -110,6 +113,32 @@ public sealed class AuthService : IAuthService
 
         storedToken.RevokedAt = DateTime.UtcNow;
         return new AuthResult((int)HttpStatusCode.OK, Response: await CreateAuthResponseAsync(user));
+    }
+
+    public async Task<AuthResult> LogoutAsync(
+        Guid userId,
+        LogoutRequest request,
+        string? accessTokenJti,
+        DateTime? accessTokenExpiresAt)
+    {
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            return new AuthResult((int)HttpStatusCode.BadRequest, "RefreshToken is required.");
+        }
+
+        var tokenHash = _tokenService.HashRefreshToken(request.RefreshToken);
+        var revoked = await _repository.RevokeRefreshTokenAsync(tokenHash, userId);
+        if (!revoked)
+        {
+            return new AuthResult((int)HttpStatusCode.BadRequest, "Refresh token is invalid.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(accessTokenJti))
+        {
+            _jwtBlacklist.Add(accessTokenJti, accessTokenExpiresAt ?? DateTime.UtcNow);
+        }
+
+        return new AuthResult((int)HttpStatusCode.OK, "Logged out successfully.");
     }
 
     private async Task<AuthResponse> CreateAuthResponseAsync(User user)

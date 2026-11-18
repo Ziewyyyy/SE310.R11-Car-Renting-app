@@ -33,6 +33,24 @@ public sealed class AuthRepository : IAuthRepository
         return _db.RefreshTokens.SingleOrDefaultAsync(token => token.TokenHash == tokenHash);
     }
 
+    public async Task<bool> RevokeRefreshTokenAsync(string tokenHash, Guid userId)
+    {
+        var token = await _db.RefreshTokens
+            .SingleOrDefaultAsync(item => item.TokenHash == tokenHash && item.UserId == userId);
+        if (token is null)
+        {
+            return false;
+        }
+
+        if (!token.RevokedAt.HasValue)
+        {
+            token.RevokedAt = DateTime.UtcNow;
+        }
+
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
     public Task AddUserAsync(User user)
     {
         _db.Users.Add(user);
